@@ -299,35 +299,40 @@ with col5:
 
         st.plotly_chart(fig5, use_container_width=True)
 
+st.markdown("---")
 
 # COMPARATIVO SAMANAL
 import calendar
 
 with st.container(border=True):
-    st.markdown("### 📈 Evolução Semanal por Dia da Semana")
+    st.markdown("### 📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal)")
 
-    df_semana = df_filt.copy()
-    df_semana["SEMANA"] = df_semana["DATA"].dt.isocalendar().week
-    df_semana["ANO"] = df_semana["DATA"].dt.year
-    df_semana["DIA_SEMANA"] = df_semana["DATA"].dt.day_name(locale="pt_BR")
-    df_semana["DIA_SEMANA"] = df_semana["DIA_SEMANA"].str.lower()
+    # Selecionar mês
+    df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
+    meses_disp = sorted(df_filt["MES_ANO"].unique())
+    mes_selecionado = st.selectbox("Selecionar Mês:", meses_disp, index=len(meses_disp)-1)
 
-    # Início e fim da semana (para título das colunas)
-    df_semana["INICIO_SEMANA"] = df_semana["DATA"] - pd.to_timedelta(df_semana["DATA"].dt.weekday, unit="d")
-    df_semana["FIM_SEMANA"] = df_semana["INICIO_SEMANA"] + pd.Timedelta(days=6)
-    df_semana["PERIODO"] = df_semana["INICIO_SEMANA"].dt.strftime('%d/%m') + " à " + df_semana["FIM_SEMANA"].dt.strftime('%d/%m')
+    df_mes = df_filt[df_filt["MES_ANO"] == mes_selecionado].copy()
+    df_mes["SEMANA"] = df_mes["DATA"].dt.isocalendar().week
+    df_mes["ANO"] = df_mes["DATA"].dt.year
+    df_mes["DIA_SEMANA"] = df_mes["DATA"].dt.day_name(locale="pt_BR").str.lower()
 
-    # Agrupar por semana e dia da semana
-    df_grouped = df_semana.groupby(["ANO", "SEMANA", "PERIODO", "DIA_SEMANA"])["TOTAL"].sum().reset_index()
+    # Início e fim da semana (para título)
+    df_mes["INICIO_SEMANA"] = df_mes["DATA"] - pd.to_timedelta(df_mes["DATA"].dt.weekday, unit="d")
+    df_mes["FIM_SEMANA"] = df_mes["INICIO_SEMANA"] + pd.Timedelta(days=6)
+    df_mes["PERIODO"] = df_mes["INICIO_SEMANA"].dt.strftime('%d/%m') + " à " + df_mes["FIM_SEMANA"].dt.strftime('%d/%m')
+
+    # Agrupamento
+    df_grouped = df_mes.groupby(["SEMANA", "PERIODO", "DIA_SEMANA"])["TOTAL"].sum().reset_index()
 
     # Pivotar
     df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TOTAL").fillna(0)
 
-    # Ordenar os dias da semana manualmente
-    dias_ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
-    df_pivot = df_pivot.reindex(dias_ordem)
+    # Ordenar os dias
+    ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    df_pivot = df_pivot.reindex(ordem)
 
-    # Calcular variação percentual
+    # Formatado com variações
     df_formatada = pd.DataFrame(index=df_pivot.index)
     colunas = df_pivot.columns.tolist()
 
@@ -346,13 +351,12 @@ with st.container(border=True):
             col_fmt.append(texto)
         df_formatada[col] = col_fmt
 
-    # Renderizar com HTML
-    st.write("Comparativo por semana (com variação sobre a anterior):")
     st.markdown(
         df_formatada.to_html(escape=False, index=True).replace("<th>", "<th style='text-align: center'>"),
         unsafe_allow_html=True
     )
 
+st.markdown("---")
 
 with st.expander("📊 Ver dados detalhados"):
     st.dataframe(df_filt, use_container_width=True)
