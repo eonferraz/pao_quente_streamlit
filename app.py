@@ -312,9 +312,9 @@ st.markdown("---")
 
 
 
-
+#ANÁLISE DE PRODUTOS
 with st.container(border=True):
-    st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos e Correlações</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos e Produtos Associados</h4>", unsafe_allow_html=True)
 
     col1, col2 = st.columns([1.2, 1.8])
 
@@ -323,6 +323,8 @@ with st.container(border=True):
         df_top = df_filt.groupby("DESCRICAO_PRODUTO")["TOTAL"].sum().reset_index()
         df_top = df_top.sort_values("TOTAL", ascending=False).head(10)
         top_produtos = df_top["DESCRICAO_PRODUTO"].tolist()
+
+        produto_selecionado = st.selectbox("🧠 Selecione um produto:", top_produtos)
 
         fig_top10 = px.bar(df_top.sort_values("TOTAL"),
                            x="TOTAL", y="DESCRICAO_PRODUTO",
@@ -342,27 +344,34 @@ with st.container(border=True):
     # ================= COLUNA 2 - GRAFO =================
     with col2:
         df_assoc = df_filt[["COD_VENDA", "DESCRICAO_PRODUTO"]].drop_duplicates()
-        df_top_assoc = df_assoc[df_assoc["DESCRICAO_PRODUTO"].isin(top_produtos)]
 
-        crosstab = pd.crosstab(df_top_assoc["COD_VENDA"], df_top_assoc["DESCRICAO_PRODUTO"])
-        cooc_matrix = crosstab.T.dot(crosstab)
-        np.fill_diagonal(cooc_matrix.values, 0)
+        # Vendas que possuem o produto selecionado
+        vendas_com_produto = df_assoc[df_assoc["DESCRICAO_PRODUTO"] == produto_selecionado]["COD_VENDA"].unique()
+        df_relacionados = df_assoc[df_assoc["COD_VENDA"].isin(vendas_com_produto)]
+
+        # Total de vendas com o produto
+        total_vendas_produto = len(vendas_com_produto)
+
+        # Frequência de outros produtos nas mesmas vendas
+        relacionados = df_relacionados[df_relacionados["DESCRICAO_PRODUTO"] != produto_selecionado]
+        freq_relacionados = relacionados["DESCRICAO_PRODUTO"].value_counts().reset_index()
+        freq_relacionados.columns = ["PRODUTO", "FREQ"]
+        freq_relacionados["PCT"] = freq_relacionados["FREQ"] / total_vendas_produto
+
+        # Criar grafo com produto selecionado como central
+        import networkx as nx
+        import plotly.graph_objects as go
 
         G = nx.Graph()
-        for produto in cooc_matrix.columns:
-            total = df_top[df_top["DESCRICAO_PRODUTO"] == produto]["TOTAL"].values[0]
-            G.add_node(produto, size=total)
+        G.add_node(produto_selecionado, size=100)
 
-        for i in cooc_matrix.index:
-            for j in cooc_matrix.columns:
-                peso = cooc_matrix.loc[i, j]
-                if peso > 0:
-                    G.add_edge(i, j, weight=peso)
+        for _, row in freq_relacionados.iterrows():
+            G.add_node(row["PRODUTO"], size=row["PCT"] * 100)
+            G.add_edge(produto_selecionado, row["PRODUTO"], weight=row["PCT"])
 
-        pos = nx.spring_layout(G, seed=42, k=0.7)
+        pos = nx.spring_layout(G, seed=42, k=0.8)
 
-        edge_x = []
-        edge_y = []
+        edge_x, edge_y = [], []
         for edge in G.edges():
             x0, y0 = pos[edge[0]]
             x1, y1 = pos[edge[1]]
@@ -373,21 +382,24 @@ with st.container(border=True):
             x=edge_x, y=edge_y,
             line=dict(width=1.5, color="#A4B494"),
             hoverinfo="none",
-            mode="lines")
+            mode="lines"
+        )
 
         node_x, node_y, node_text, node_size = [], [], [], []
         for node in G.nodes():
             x, y = pos[node]
             node_x.append(x)
             node_y.append(y)
-            node_text.append(f"{node}")
+            node_text.append(
+                f"{node}<br>{'Produto Selecionado' if node == produto_selecionado else f'{G[produto_selecionado][node]['weight']:.0%} das vendas'}"
+            )
             node_size.append(G.nodes[node]["size"])
 
         node_trace = go.Scatter(
             x=node_x, y=node_y,
             mode="markers+text",
             hoverinfo="text",
-            text=node_text,
+            text=[n.split("<br>")[0] for n in node_text],
             textposition="top center",
             marker=dict(
                 showscale=False,
@@ -400,7 +412,7 @@ with st.container(border=True):
 
         fig_grafo = go.Figure(data=[edge_trace, node_trace],
                               layout=go.Layout(
-                                  title=dict(text="Correlação entre Produtos do Top 10", font=dict(size=16)),
+                                  title=dict(text=f"Produtos Relacionados a: {produto_selecionado}", font=dict(size=16)),
                                   showlegend=False,
                                   margin=dict(t=40, l=0, r=0, b=0),
                                   hovermode="closest",
@@ -410,6 +422,7 @@ with st.container(border=True):
                               ))
 
         st.plotly_chart(fig_grafo, use_container_width=True)
+
 
 
 
