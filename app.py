@@ -7,6 +7,7 @@ import io
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Alignment
 from datetime import datetime
+import numpy as np
 
 # ====================
 # CONFIG INICIAL
@@ -305,6 +306,10 @@ with col5:
 
 st.markdown("---")
 
+
+
+
+
 #TOP 10 PRODUTOS
 with st.container(border=True):
     st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos por Faturamento</h4>", unsafe_allow_html=True)
@@ -324,6 +329,20 @@ with st.container(border=True):
     fig_top.update_layout(margin=dict(t=40, l=0, r=0, b=0))
 
     st.plotly_chart(fig_top, use_container_width=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #Evolução de venda por dia da semana
 with st.container(border=True):
