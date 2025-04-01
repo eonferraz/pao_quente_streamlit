@@ -310,9 +310,8 @@ with st.container(border=True):
     # Selecionar mês
     df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
     meses_disp = sorted(df_filt["MES_ANO"].unique())
-    mes_selecionado = st.selectbox("Selecionar Mês:", meses_disp, index=len(meses_disp)-1)
-
-    df_mes = df_filt[df_filt["MES_ANO"] == mes_selecionado].copy()
+    meses_selecionados = st.multiselect("Selecionar Mês(es):", meses_disp, default=[meses_disp[-1]])
+    df_mes = df_filt[df_filt["MES_ANO"].isin(meses_selecionados)].copy()
     df_mes["SEMANA"] = df_mes["DATA"].dt.isocalendar().week
     df_mes["ANO"] = df_mes["DATA"].dt.year
     dias_traduzidos = {
