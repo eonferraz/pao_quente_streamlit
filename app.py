@@ -393,9 +393,9 @@ with st.container(border=True):
                 texto = f"<b>{node}</b>"
             else:
                 pct = G[produto_selecionado][node]['weight']
-                legenda = f"{pct:.0%}"
+                legenda = f"aparece em {pct:.1%} das vendas de {produto_selecionado}"
                 tamanho = 20 + pct * 100
-                texto = f"<b>{node}</b><br><span style='font-size:16px; color:#000;'>{legenda}</span>"
+                texto = f"<b>{node}</b><br><span style='font-size:18px; color:#333;'>{legenda}</span>"
             
             node_text.append(texto)
 
