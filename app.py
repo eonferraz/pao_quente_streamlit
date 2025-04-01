@@ -6,6 +6,7 @@ import base64
 import io
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Alignment
+from datetime import datetime
 
 # ====================
 # CONFIG INICIAL
