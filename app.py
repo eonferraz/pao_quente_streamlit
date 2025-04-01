@@ -308,6 +308,12 @@ import calendar
 tabela_html = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
 tabela_html += "<thead><tr><th style='padding: 6px; border: 1px solid #555;'>DIA_SEMANA</th>"
 
+colunas = df_formatada.columns.tolist()  # <- 🔧 Adiciona isso aqui
+
+# Cabeçalhos
+for col in colunas:
+    tabela_html += f"<th style='padding: 6px; border: 1px solid #555;'>{col}</th>"
+
 # Cabeçalhos
 for col in colunas:
     tabela_html += f"<th style='padding: 6px; border: 1px solid #555;'>{col}</th>"
