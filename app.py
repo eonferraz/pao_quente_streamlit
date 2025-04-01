@@ -312,7 +312,7 @@ st.markdown("---")
 
 
 
-#ANÁLISE DE PRODUTOS
+# ANÁLISE DE PRODUTOS
 with st.container(border=True):
     st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos e Produtos Associados</h4>", unsafe_allow_html=True)
 
@@ -345,20 +345,16 @@ with st.container(border=True):
     with col2:
         df_assoc = df_filt[["COD_VENDA", "DESCRICAO_PRODUTO"]].drop_duplicates()
 
-        # Vendas que possuem o produto selecionado
         vendas_com_produto = df_assoc[df_assoc["DESCRICAO_PRODUTO"] == produto_selecionado]["COD_VENDA"].unique()
         df_relacionados = df_assoc[df_assoc["COD_VENDA"].isin(vendas_com_produto)]
 
-        # Total de vendas com o produto
         total_vendas_produto = len(vendas_com_produto)
 
-        # Frequência de outros produtos nas mesmas vendas (TOP 5)
         relacionados = df_relacionados[df_relacionados["DESCRICAO_PRODUTO"] != produto_selecionado]
         freq_relacionados = relacionados["DESCRICAO_PRODUTO"].value_counts().head(5).reset_index()
         freq_relacionados.columns = ["PRODUTO", "FREQ"]
         freq_relacionados["PCT"] = freq_relacionados["FREQ"] / total_vendas_produto
 
-        # Criar grafo com produto selecionado como central
         import networkx as nx
         import plotly.graph_objects as go
 
@@ -390,24 +386,28 @@ with st.container(border=True):
             x, y = pos[node]
             node_x.append(x)
             node_y.append(y)
+
             if node == produto_selecionado:
                 legenda = "Produto Selecionado"
+                tamanho = 50
             else:
                 pct = G[produto_selecionado][node]['weight']
-                legenda = f"Aparece em {pct:.1%} das vendas com {produto_selecionado}"            
-            node_text.append(f"{node}<br><span style='font-size:12px'>{legenda}</span>")            
-            node_size.append(G.nodes[node]["size"])
+                legenda = f"{pct:.1%} das vendas com {produto_selecionado}"
+                tamanho = 20 + pct * 100
+
+            node_text.append(f"<b>{node}</b><br><span style='font-size:13px; color:#333;'>{legenda}</span>")
+            node_size.append(tamanho)
 
         node_trace = go.Scatter(
             x=node_x, y=node_y,
             mode="markers+text",
-            hoverinfo="text",
-            text=[n.split("<br>")[0] for n in node_text],
-            textposition="top center",
+            hoverinfo="skip",
+            text=node_text,
+            textposition="bottom center",
             marker=dict(
                 showscale=False,
                 color=node_size,
-                size=[10 + (s / max(node_size)) * 30 for s in node_size],
+                size=node_size,
                 colorscale="OrRd",
                 line_width=2
             )
@@ -425,8 +425,6 @@ with st.container(border=True):
                               ))
 
         st.plotly_chart(fig_grafo, use_container_width=True)
-
-
 
 
 #Evolução de venda por dia da semana
