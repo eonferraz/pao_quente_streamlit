@@ -302,6 +302,7 @@ with col5:
 st.markdown("---")
 
 with st.container(border=True):
+    st.dataframe(df_filt, use_container_width=True)
     st.markdown("### 📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal com Cores)")
 
     # === Pré-processamento base
