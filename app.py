@@ -2,8 +2,20 @@ import streamlit as st
 import pandas as pd
 import pyodbc
 import plotly.express as px
+from PIL import Image
 
-st.set_page_config(page_title="Dashboard SX Comercial", layout="wide")
+# Logo
+logo = Image.open("logo.png")  # Troque pelo nome do seu arquivo
+
+# Layout superior com título e logo
+col1, col2 = st.columns([4, 1])
+with col1:
+    st.markdown("<h1 style='color: #3A2E86;'>Dashboard de Vendas - SX Comercial</h1>", unsafe_allow_html=True)
+with col2:
+    st.image(logo, width=120)
+
+
+st.set_page_config(page_title="Pão Quente", layout="wide")
 
 # Conexão com SQL Server
 @st.cache_data(ttl=600)
