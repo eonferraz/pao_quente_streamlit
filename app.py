@@ -62,17 +62,19 @@ df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_seleci
 # ====================
 # 1ª FAIXA (CARDS + 3 GRÁFICOS)
 # ====================
-col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns([1, 2, 2])
 
-# Cards
+# Cards (três containers individuais para mesma altura das demais colunas)
 with col1:
-    with st.container(border=True):
-        fat_total = df_filt["TOTAL"].sum()
-        qtd_vendas = df_filt["COD_VENDA"].nunique()
-        ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
+    fat_total = df_filt["TOTAL"].sum()
+    qtd_vendas = df_filt["COD_VENDA"].nunique()
+    ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
 
+    with st.container(border=True):
         st.metric("💰 Faturamento Total", f"R$ {fat_total:,.2f}".replace(",", "."))
+    with st.container(border=True):
         st.metric("📊 Qtde de Vendas", qtd_vendas)
+    with st.container(border=True):
         st.metric("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
 
 # Gráfico 1: Faturamento por Ano-Mês
@@ -81,24 +83,35 @@ with col2:
         df_mes = df_filt.groupby("ANO_MES")["TOTAL"].sum().reset_index()
         fig1 = px.bar(df_mes, x="ANO_MES", y="TOTAL", title="Faturamento por Mês",
                       text_auto=True, color_discrete_sequence=["#FE9C37"])
-        fig1.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', yaxis_tickprefix="R$ ", yaxis_tickformat=",.2f")
+        fig1.update_layout(
+            uniformtext_minsize=8,
+            uniformtext_mode='hide',
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False, visible=False),
+            xaxis_tickangle=-45,
+            yaxis_tickprefix="R$ ",
+            yaxis_tickformat=",.2f"
+        )
         st.plotly_chart(fig1, use_container_width=True)
 
-# Gráfico 2: Barras Horizontais + Rosca
+# Gráfico 2: Barras Horizontais + Rosca (em uma linha com altura igual aos cards)
 with col3:
     with st.container(border=True):
         df_un = df_filt.groupby("UN")["TOTAL"].sum().reset_index().sort_values("TOTAL")
 
-        fig2 = px.bar(df_un, x="TOTAL", y="UN", orientation='h',
-                      text_auto=True, title="Faturamento por UN", color_discrete_sequence=["#A4B494"])
-        fig2.update_layout(xaxis_tickprefix="R$ ", xaxis_tickformat=",.2f")
-        st.plotly_chart(fig2, use_container_width=True)
+        col3a, col3b = st.columns(2)
 
-        fig3 = px.pie(df_un, names="UN", values="TOTAL", hole=0.5,
-                      title="Distribuição % por UN",
-                      color_discrete_sequence=px.colors.sequential.RdBu)
-        fig3.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(fig3, use_container_width=True)
+        with col3a:
+            fig2 = px.bar(df_un, x="TOTAL", y="UN", orientation='h',
+                          text_auto=True, title="Faturamento por UN", color_discrete_sequence=["#A4B494"])
+            fig2.update_layout(xaxis_tickprefix="R$ ", xaxis_tickformat=",.2f")
+            st.plotly_chart(fig2, use_container_width=True)
+
+        with col3b:
+            fig3 = px.pie(df_un, names="UN", values="TOTAL", hole=0.5,
+                          title="Distribuição % por UN",
+                          color_discrete_sequence=px.colors.sequential.RdBu)
+            fig3.update_traces(textposition="inside", textinfo="percent+label")
+            st.plotly_chart(fig3, use_container_width=True)
 
 # ====================
 # 2ª FAIXA (ACUMULADO E TICKET)
