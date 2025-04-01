@@ -301,11 +301,16 @@ with col5:
 
 st.markdown("---")
 
-with st.container(border=True):
-    st.dataframe(df_filt, use_container_width=True)
-    st.markdown("### 📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal com Cores)")
+with st.expander("📊 Ver dados detalhados"):
+st.dataframe(df_filt, use_container_width=True)
 
-    # === Pré-processamento base
+import io
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Alignment
+
+with st.container(border=True):
+    st.markdown("<h4 style='color:#862E3A;'>📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal com Cores)</h4>", unsafe_allow_html=True)
+
     df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
     meses_disp = sorted(df_filt["MES_ANO"].unique())
     meses_selecionados = st.multiselect("Selecionar Mês(es):", meses_disp, default=[meses_disp[-1]])
@@ -325,20 +330,21 @@ with st.container(border=True):
 
     df_grouped = df_mes.groupby(["SEMANA", "PERIODO", "DIA_SEMANA"])["TOTAL"].sum().reset_index()
     df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TOTAL").fillna(0)
-
-    # Reordena os dias
     ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
     df_pivot = df_pivot.reindex(ordem)
 
-    # Cria dataframe com texto + % variação
     df_formatada = pd.DataFrame(index=df_pivot.index)
     colunas = df_pivot.columns.tolist()
 
+    variacoes_pct = pd.DataFrame(index=df_pivot.index)
+
     for i, col in enumerate(colunas):
         col_fmt = []
+        var_list = []
         for idx in df_pivot.index:
             valor = df_pivot.loc[idx, col]
             texto = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            variacao = None
 
             if i > 0:
                 valor_ant = df_pivot.loc[idx, colunas[i - 1]]
@@ -347,9 +353,11 @@ with st.container(border=True):
                     cor = "green" if variacao > 0 else "red"
                     texto += f"<br><span style='color:{cor}; font-size: 12px'>{variacao:+.2%}</span>"
             col_fmt.append(texto)
+            var_list.append(variacao)
         df_formatada[col] = col_fmt
+        variacoes_pct[col] = var_list
 
-    # === Geração da Tabela HTML com cores no fundo
+    # === Tabela HTML
     tabela_html = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
     tabela_html += "<thead><tr><th style='padding: 6px; border: 1px solid #555;'>DIA_SEMANA</th>"
 
@@ -361,16 +369,7 @@ with st.container(border=True):
         tabela_html += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{idx}</td>"
         for col in colunas:
             celula = df_formatada.loc[idx, col]
-
-            # Extrair % se existir
-            if "<span" in celula:
-                try:
-                    pct_str = celula.split('>')[2].split('%')[0].replace("+", "").replace(",", ".")
-                    pct = float(pct_str) / 100
-                except:
-                    pct = None
-            else:
-                pct = None
+            pct = variacoes_pct.loc[idx, col]
 
             # Cor de fundo
             if pct is None:
@@ -388,7 +387,44 @@ with st.container(border=True):
 
     st.markdown(tabela_html, unsafe_allow_html=True)
 
+    # === Exportação para Excel
+    output = io.BytesIO()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Comparativo"
 
+    # Cabeçalhos
+    ws.append(["DIA_SEMANA"] + colunas)
 
-with st.expander("📊 Ver dados detalhados"):
-st.dataframe(df_filt, use_container_width=True)
+    # Dados com variações simples
+    for idx in df_pivot.index:
+        linha = [idx]
+        for col in colunas:
+            val = df_pivot.loc[idx, col]
+            linha.append(round(val, 2))
+        ws.append(linha)
+
+    # Estilização
+    for row in ws.iter_rows(min_row=2, min_col=2):
+        for cell in row:
+            pct_row = cell.row - 2
+            pct_col = cell.column - 2
+            try:
+                pct = variacoes_pct.iloc[pct_row, pct_col]
+                if pct is not None:
+                    if pct >= 0:
+                        fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")
+                    else:
+                        fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+                    cell.fill = fill
+            except:
+                continue
+            cell.alignment = Alignment(horizontal="center")
+
+    wb.save(output)
+    st.download_button(
+        label="📥 Baixar Excel",
+        data=output.getvalue(),
+        file_name="comparativo_dia_da_semana.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
