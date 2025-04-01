@@ -128,7 +128,7 @@ if st.session_state.get('editar_metas', False):
     for _, row in metas_2025.iterrows():
         df_input.at[row["ANO-MES"], row["LOJA"]] = row["VALOR_META"]
 
-    edited_df = st.data_editor(df_input.fillna(""), num_rows="dynamic", use_container_width=True, key="meta_editor")
+    edited_df = st.data_editor(df_input, num_rows="dynamic", use_container_width=True, key="meta_editor"), num_rows="dynamic", use_container_width=True, key="meta_editor")
 
     col_btn1, col_btn2 = st.columns([1, 1])
     with col_btn1:
@@ -161,6 +161,7 @@ if st.session_state.get('editar_metas', False):
     with col_btn2:
         if st.button("❌ Cancelar"):
             st.session_state['editar_metas'] = False
+
 
 
 
