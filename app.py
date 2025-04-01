@@ -305,7 +305,27 @@ with col5:
 
 st.markdown("---")
 
+with st.container(border=True):
+    st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos por Faturamento</h4>", unsafe_allow_html=True)
 
+    df_top = df_filt.groupby("DESCRICAO_PRODUTO")["TOTAL"].sum().reset_index()
+    df_top = df_top.sort_values("TOTAL", ascending=False).head(10)
+
+    fig_top = px.treemap(
+        df_top,
+        path=["DESCRICAO_PRODUTO"],
+        values="TOTAL",
+        title="Top 10 Produtos - Faturamento",
+        color="TOTAL",
+        color_continuous_scale="OrRd"
+    )
+    fig_top.update_traces(textinfo="label+value", textfont=dict(size=14))
+    fig_top.update_layout(margin=dict(t=40, l=0, r=0, b=0))
+
+    st.plotly_chart(fig_top, use_container_width=True)
+
+
+#Evolução de venda por dia da semana
 with st.container(border=True):
     st.markdown("<h4 style='color:#862E3A;'>📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal com Cores)</h4>", unsafe_allow_html=True)
 
