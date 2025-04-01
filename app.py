@@ -514,3 +514,90 @@ with st.container(border=True):
 
     st.markdown(tabela_vendas, unsafe_allow_html=True)
 
+# === Evolução do Ticket Médio por Dia da Semana (Drilldown Semanal)
+st.markdown("---")
+with st.container(border=True):
+    st.markdown("<h4 style='color:#862E3A;'>📊 Evolução do Ticket Médio por Dia da Semana (Drilldown Mensal com Cores)</h4>", unsafe_allow_html=True)
+
+    df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
+    meses_disp = sorted(df_filt["MES_ANO"].unique())
+    meses_selecionados_ticket = st.multiselect("Selecionar Mês(es):", meses_disp, default=[meses_disp[-1]], key="meses_ticket")
+
+    df_mes_ticket = df_filt[df_filt["MES_ANO"].isin(meses_selecionados_ticket)].copy()
+    df_mes_ticket["SEMANA"] = df_mes_ticket["DATA"].dt.isocalendar().week
+    df_mes_ticket["ANO"] = df_mes_ticket["DATA"].dt.year
+
+    dias_traduzidos = {
+        "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
+        "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
+    }
+    df_mes_ticket["DIA_SEMANA"] = df_mes_ticket["DATA"].dt.day_name().map(dias_traduzidos)
+
+    df_mes_ticket["INICIO_SEMANA"] = df_mes_ticket["DATA"] - pd.to_timedelta(df_mes_ticket["DATA"].dt.weekday, unit="d")
+    df_mes_ticket["FIM_SEMANA"] = df_mes_ticket["INICIO_SEMANA"] + pd.Timedelta(days=6)
+    df_mes_ticket["PERIODO"] = df_mes_ticket["INICIO_SEMANA"].dt.strftime('%d/%m') + " à " + df_mes_ticket["FIM_SEMANA"].dt.strftime('%d/%m')
+
+    df_grouped_ticket = df_mes_ticket.groupby(["SEMANA", "PERIODO", "DIA_SEMANA"]).agg({"TOTAL": "sum", "COD_VENDA": "nunique"}).reset_index()
+    df_grouped_ticket["TICKET_MEDIO"] = df_grouped_ticket["TOTAL"] / df_grouped_ticket["COD_VENDA"]
+
+    df_pivot_ticket = df_grouped_ticket.pivot(index="DIA_SEMANA", columns="PERIODO", values="TICKET_MEDIO").fillna(0)
+
+    ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    df_pivot_ticket = df_pivot_ticket.reindex(ordem)
+    df_pivot_ticket = df_pivot_ticket[sorted(df_pivot_ticket.columns, key=lambda x: datetime.strptime(x.split(" à ")[0], "%d/%m"))]
+
+    df_formatada_ticket = pd.DataFrame(index=df_pivot_ticket.index)
+    colunas_ticket = df_pivot_ticket.columns.tolist()
+    variacoes_pct_ticket = pd.DataFrame(index=df_pivot_ticket.index)
+
+    for i, col in enumerate(colunas_ticket):
+        col_fmt = []
+        var_list = []
+        for idx in df_pivot_ticket.index:
+            valor = df_pivot_ticket.loc[idx, col]
+            texto = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            variacao = None
+            if i > 0:
+                valor_ant = df_pivot_ticket.loc[idx, colunas_ticket[i - 1]]
+                if valor_ant > 0:
+                    variacao = (valor - valor_ant) / valor_ant
+                    cor = "green" if variacao > 0 else "red"
+                    texto += f"<br><span style='color:{cor}; font-size: 14px'>{variacao:+.2%}</span>"
+            col_fmt.append(texto)
+            var_list.append(variacao)
+        df_formatada_ticket[col] = col_fmt
+        variacoes_pct_ticket[col] = var_list
+
+    # === Tabela HTML
+    tabela_ticket = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
+    tabela_ticket += "<thead><tr><th style='padding: 6px; border: 1px solid #555;'>DIA_SEMANA</th>"
+
+    for col in colunas_ticket:
+        tabela_ticket += f"<th style='padding: 6px; border: 1px solid #555;'>{col}</th>"
+    tabela_ticket += "</tr></thead><tbody>"
+
+    for idx in df_formatada_ticket.index:
+        tabela_ticket += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{idx}</td>"
+        for col in colunas_ticket:
+            celula = df_formatada_ticket.loc[idx, col]
+            pct = variacoes_pct_ticket.loc[idx, col]
+
+            # Cor de fundo com proteção
+            if pct is None or pd.isna(pct):
+                fundo = "#f0f0f0"
+            else:
+                try:
+                    if pct >= 0:
+                        intensidade = int(255 - min(pct, 1) * 155)
+                        fundo = f"rgb({intensidade}, 255, {intensidade})"
+                    else:
+                        intensidade = int(255 - min(abs(pct), 1) * 155)
+                        fundo = f"rgb(255, {intensidade}, {intensidade})"
+                except:
+                    fundo = "#f0f0f0"
+
+            tabela_ticket += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111;'>{celula}</td>"
+        tabela_ticket += "</tr>"
+    tabela_ticket += "</tbody></table>"
+
+    st.markdown(tabela_ticket, unsafe_allow_html=True)
