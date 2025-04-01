@@ -4,20 +4,22 @@ import pyodbc
 import plotly.express as px
 from PIL import Image
 
+# 👉 SEMPRE PRIMEIRO
+st.set_page_config(page_title="Pão Quente", layout="wide")
+
 # Logo
-logo = Image.open("logo.png")  # Troque pelo nome do seu arquivo
+logo = Image.open("logo.png")  # Troque pelo nome correto do arquivo
 
 # Layout superior com título e logo
 col1, col2 = st.columns([4, 1])
 with col1:
-    st.markdown("<h1 style='color: #3A2E86;'>Dashboard de Vendas - SX Comercial</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color: #3A2E86;'>Padaria Pão Quente</h1>", unsafe_allow_html=True)
 with col2:
     st.image(logo, width=120)
 
-
-st.set_page_config(page_title="Pão Quente", layout="wide")
-
-# Conexão com SQL Server
+# ========================
+# 🔌 Conexão com SQL Server
+# ========================
 @st.cache_data(ttl=600)
 def carregar_dados():
     conn = pyodbc.connect(
@@ -42,14 +44,14 @@ df.columns = df.columns.str.strip().str.upper()
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
 df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
 
-# Sidebar com filtros
+# ========================
+# 🎛️ Sidebar com filtros
+# ========================
 st.sidebar.header("🔎 Filtros")
 
-# Filtro de UNs
 todas_uns = sorted(df["UN"].dropna().unique())
 un_selecionadas = st.sidebar.multiselect("Selecionar UN(s):", options=todas_uns, default=todas_uns)
 
-# Filtro de ANO_MES
 todos_meses = sorted(df["ANO_MES"].dropna().unique())
 meses_selecionados = st.sidebar.multiselect("Selecionar Ano/Mês:", options=todos_meses, default=todos_meses)
 
@@ -91,7 +93,7 @@ fig_rosca.update_traces(textposition="inside", textinfo="percent+label")
 st.plotly_chart(fig_rosca, use_container_width=True)
 
 # =======================
-# 🔍 TABELA DETALHADA
+# 📋 TABELA DETALHADA
 # =======================
 with st.expander("📋 Ver dados detalhados"):
     st.dataframe(df_filtrado, use_container_width=True)
