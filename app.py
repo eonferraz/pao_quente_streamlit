@@ -204,8 +204,8 @@ with col2:
                          line=dict(color="#862E3A", dash="dot"), yaxis="y2")
 
         fig1.update_layout(
-            yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f",
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)),
+            yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f"),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
             yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%", range=[0, 1.5]),
             xaxis=dict(type='category', tickangle=-45)
         )
