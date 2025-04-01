@@ -315,25 +315,103 @@ st.markdown("---")
 
 #TOP 10 PRODUTOS
 with st.container(border=True):
-    st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos por Faturamento</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos e Correlações</h4>", unsafe_allow_html=True)
 
-    df_top = df_filt.groupby("DESCRICAO_PRODUTO")["TOTAL"].sum().reset_index()
-    df_top = df_top.sort_values("TOTAL", ascending=False).head(10)
+    col1, col2 = st.columns([1.2, 1.8])
 
-    fig_top = px.treemap(
-        df_top,
-        path=["DESCRICAO_PRODUTO"],
-        values="TOTAL",
-        title="Top 10 Produtos - Faturamento",
-        color="TOTAL",
-        color_continuous_scale="OrRd"
-    )
-    fig_top.update_traces(textinfo="label+value", textfont=dict(size=14))
-    fig_top.update_layout(margin=dict(t=40, l=0, r=0, b=0))
+    # ================= COLUNA 1 - BARRAS =================
+    with col1:
+        df_top = df_filt.groupby("DESCRICAO_PRODUTO")["TOTAL"].sum().reset_index()
+        df_top = df_top.sort_values("TOTAL", ascending=False).head(10)
+        top_produtos = df_top["DESCRICAO_PRODUTO"].tolist()
 
-    st.plotly_chart(fig_top, use_container_width=True)
+        fig_top10 = px.bar(df_top.sort_values("TOTAL"),
+                           x="TOTAL", y="DESCRICAO_PRODUTO",
+                           orientation='h',
+                           text_auto=True,
+                           title="Top 10 Produtos",
+                           color="TOTAL", color_continuous_scale="OrRd")
 
+        fig_top10.update_layout(yaxis=dict(categoryorder="total ascending"),
+                                xaxis_tickprefix="R$ ", xaxis_tickformat=",.2f",
+                                margin=dict(t=40, l=10, r=10, b=10),
+                                title_font=dict(size=16),
+                                height=400)
 
+        st.plotly_chart(fig_top10, use_container_width=True)
+
+    # ================= COLUNA 2 - GRAFO =================
+    with col2:
+        df_assoc = df_filt[["COD_VENDA", "DESCRICAO_PRODUTO"]].drop_duplicates()
+        df_top_assoc = df_assoc[df_assoc["DESCRICAO_PRODUTO"].isin(top_produtos)]
+
+        crosstab = pd.crosstab(df_top_assoc["COD_VENDA"], df_top_assoc["DESCRICAO_PRODUTO"])
+        cooc_matrix = crosstab.T.dot(crosstab)
+        np.fill_diagonal(cooc_matrix.values, 0)
+
+        G = nx.Graph()
+        for produto in cooc_matrix.columns:
+            total = df_top[df_top["DESCRICAO_PRODUTO"] == produto]["TOTAL"].values[0]
+            G.add_node(produto, size=total)
+
+        for i in cooc_matrix.index:
+            for j in cooc_matrix.columns:
+                peso = cooc_matrix.loc[i, j]
+                if peso > 0:
+                    G.add_edge(i, j, weight=peso)
+
+        pos = nx.spring_layout(G, seed=42, k=0.7)
+
+        edge_x = []
+        edge_y = []
+        for edge in G.edges():
+            x0, y0 = pos[edge[0]]
+            x1, y1 = pos[edge[1]]
+            edge_x += [x0, x1, None]
+            edge_y += [y0, y1, None]
+
+        edge_trace = go.Scatter(
+            x=edge_x, y=edge_y,
+            line=dict(width=1.5, color="#A4B494"),
+            hoverinfo="none",
+            mode="lines")
+
+        node_x, node_y, node_text, node_size = [], [], [], []
+        for node in G.nodes():
+            x, y = pos[node]
+            node_x.append(x)
+            node_y.append(y)
+            node_text.append(f"{node}")
+            node_size.append(G.nodes[node]["size"])
+
+        node_trace = go.Scatter(
+            x=node_x, y=node_y,
+            mode="markers+text",
+            hoverinfo="text",
+            text=node_text,
+            textposition="top center",
+            marker=dict(
+                showscale=False,
+                color=node_size,
+                size=[10 + (s / max(node_size)) * 30 for s in node_size],
+                colorscale="OrRd",
+                line_width=2
+            )
+        )
+
+        fig_grafo = go.Figure(data=[edge_trace, node_trace],
+                              layout=go.Layout(
+                                  title="Correlação entre Produtos do Top 10",
+                                  titlefont_size=16,
+                                  showlegend=False,
+                                  margin=dict(t=40, l=0, r=0, b=0),
+                                  hovermode="closest",
+                                  xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                                  yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                                  height=400
+                              ))
+
+        st.plotly_chart(fig_grafo, use_container_width=True)
 
 
 
