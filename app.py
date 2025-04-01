@@ -3,6 +3,9 @@ import pandas as pd
 import pyodbc
 import plotly.express as px
 import base64
+import io
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Alignment
 
 # ====================
 # CONFIG INICIAL
