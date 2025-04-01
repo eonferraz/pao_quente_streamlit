@@ -401,7 +401,6 @@ with st.container(border=True):
         fig_grafo = go.Figure(data=[edge_trace, node_trace],
                               layout=go.Layout(
                                   title=dict(text="Correlação entre Produtos do Top 10", font=dict(size=16)),
-                                  titlefont_size=16,
                                   showlegend=False,
                                   margin=dict(t=40, l=0, r=0, b=0),
                                   hovermode="closest",
