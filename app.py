@@ -208,7 +208,7 @@ with col2:
 
         fig1.update_layout(
             yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f"),
-            yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%"),
+            yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%", range=[0, 1.5]),
             xaxis=dict(type='category', tickangle=-45)
         )
         st.plotly_chart(fig1, use_container_width=True)
