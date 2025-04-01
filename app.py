@@ -56,7 +56,6 @@ st.markdown(f"""
   <img src="data:image/png;base64,{logo_base64}" alt="Logo">
   <div class="header-title">
     <h1>Dashboard de Vendas</h1>
-    <h4>Padaria Pão Quente</h4>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -110,7 +109,7 @@ with col1:
     qtd_vendas = df_filt["COD_VENDA"].nunique()
     ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
 
-    card_style = "height: 160px; display: flex; flex-direction: column; justify-content: center;"
+    card_style = "height: 80px; display: flex; flex-direction: column; justify-content: center;"
 
     with st.container(border=True):
         st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
