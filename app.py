@@ -23,6 +23,19 @@ st.title("📊 Dashboard de Vendas - SX Comercial")
 with st.spinner("Carregando dados..."):
     df = carregar_dados()
 
+# Padronizar os nomes das colunas
+df.columns = df.columns.str.strip().str.upper()
+
+st.write("Colunas disponíveis:", df.columns.tolist())  # Debug
+
+# Filtros
+meses = df['ANO_MES'].dropna().unique()
+meses.sort()
+mes_selecionado = st.selectbox("Filtrar por Ano/Mês:", meses)
+
+df_filtrado = df[df["ANO_MES"] == mes_selecionado]
+
+
 # Filtros
 meses = df['ANO_MES'].dropna().unique()
 meses.sort()
