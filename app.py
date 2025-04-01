@@ -250,14 +250,20 @@ with col4:
         fig4.update_layout(yaxis_tickprefix="R$ ", yaxis_tickformat=",.2f")
         st.plotly_chart(fig4, use_container_width=True)
 
+
 with col5:
     with st.container(border=True):
         df_ticket = df_filt.groupby("DATA").agg({"TOTAL": "sum", "COD_VENDA": "nunique"}).reset_index()
         df_ticket["TICKET"] = df_ticket["TOTAL"] / df_ticket["COD_VENDA"]
+        df_ticket["MM_TICKET"] = df_ticket["TICKET"].rolling(window=7).mean()
+
         fig5 = px.line(df_ticket, x="DATA", y="TICKET", title="Evolução do Ticket Médio",
                        markers=True, color_discrete_sequence=["#37392E"])
+        fig5.add_scatter(x=df_ticket["DATA"], y=df_ticket["MM_TICKET"], mode="lines", name="Média Móvel (7 dias)",
+                         line=dict(color="#FE9C37", dash="dot"))
         fig5.update_layout(yaxis_tickprefix="R$ ", yaxis_tickformat=",.2f")
         st.plotly_chart(fig5, use_container_width=True)
+
 
 with st.expander("📊 Ver dados detalhados"):
     st.dataframe(df_filt, use_container_width=True)
