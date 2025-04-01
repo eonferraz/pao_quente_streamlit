@@ -229,7 +229,7 @@ with col3:
                           color_discrete_sequence=px.colors.sequential.RdBu)
             fig3.update_traces(textposition="inside", textinfo="percent+label")
             st.plotly_chart(fig3, use_container_width=True)
-            
+
 st.markdown("---")
 
 col4, col5 = st.columns(2)
