@@ -2,55 +2,41 @@ import streamlit as st
 import pandas as pd
 import pyodbc
 
-st.set_page_config(page_title="Dashboard de Vendas", layout="wide")
+st.set_page_config(page_title="Dashboard de Vendas - SX Comercial", layout="wide")
 
 # Conexão com SQL Server
 @st.cache_data(ttl=600)
 def carregar_dados():
     conn = pyodbc.connect(
         'DRIVER={ODBC Driver 17 for SQL Server};'
-        f'SERVER=sx-global.database.windows.net;'
-        f'DATABASE=sx_comercial;'
-        f'UID=paulo.ferraz;'
-        f'PWD=Gs!^42j$G0f0^EI#ZjRv'
+        'SERVER=sx-global.database.windows.net;'
+        'DATABASE=sx_comercial;'
+        'UID=paulo.ferraz;'
+        'PWD=Gs!^42j$G0f0^EI#ZjRv'
     )
     df = pd.read_sql("SELECT * FROM PQ_VENDAS", conn)
     conn.close()
     return df
 
-st.title("📊 Dashboard de Vendas - SX Comercial")
+st.title("📊 Dashboard de Faturamento - SX Comercial")
 
-with st.spinner("Carregando dados..."):
+with st.spinner("🔄 Carregando dados..."):
     df = carregar_dados()
 
-# Padronizar os nomes das colunas
+# Padronizar nomes de colunas
 df.columns = df.columns.str.strip().str.upper()
 
-st.write("Colunas disponíveis:", df.columns.tolist())  # Debug
+# Filtro por Unidade (Loja)
+unidades = df["LOJA"].dropna().unique()
+unidades.sort()
+un_selecionada = st.selectbox("🔎 Selecione a UN (Loja):", unidades)
 
-# Filtros
-meses = df['ANO_MES'].dropna().unique()
-meses.sort()
-mes_selecionado = st.selectbox("Filtrar por Ano/Mês:", meses)
+df_filtrado = df[df["LOJA"] == un_selecionada]
 
-df_filtrado = df[df["ANO_MES"] == mes_selecionado]
+# Faturamento por mês
+faturamento_mes = df_filtrado.groupby("ANO_MES")["TOTAL"].sum().reset_index()
+faturamento_mes = faturamento_mes.sort_values(by="ANO_MES")
 
-
-# Filtros
-meses = df['ANO_MES'].dropna().unique()
-meses.sort()
-mes_selecionado = st.selectbox("Filtrar por Ano/Mês:", meses)
-
-df_filtrado = df[df["ANO_MES"] == mes_selecionado]
-
-# Exibir dados
-st.subheader(f"📄 Dados de Vendas - {mes_selecionado}")
-st.dataframe(df_filtrado, use_container_width=True)
-
-# Faturamento por loja
-st.subheader("💰 Faturamento por Loja")
-faturamento = df_filtrado.groupby("Loja")["TOTAL"].sum().reset_index()
-faturamento = faturamento.sort_values(by="TOTAL", ascending=False)
-
-st.bar_chart(faturamento.set_index("Loja"))
-
+# Gráfico
+st.subheader(f"💰 Faturamento Mensal - UN: {un_selecionada}")
+st.bar_chart(faturamento_mes.set_index("ANO_MES"))
