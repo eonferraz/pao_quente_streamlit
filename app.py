@@ -285,10 +285,20 @@ with col5:
 
         fig5 = px.line(df_ticket, x="DATA", y="TICKET", title="Evolução do Ticket Médio",
                        markers=True, color_discrete_sequence=["#37392E"])
-        fig5.add_scatter(x=df_ticket["DATA"], y=df_ticket["MM_TICKET"], mode="lines", name="Média Móvel (7 dias)",
+
+        fig5.add_scatter(x=df_ticket["DATA"], y=df_ticket["MM_TICKET"],
+                         mode="lines", name="Média Móvel (7 dias)",
                          line=dict(color="#FE9C37", dash="dot"))
-        fig5.update_layout(yaxis_tickprefix="R$ ", yaxis_tickformat=",.2f")
+
+        fig5.update_layout(
+            yaxis_tickprefix="R$ ",
+            yaxis_tickformat=",.2f",
+            yaxis_range=[0, df_ticket["TICKET"].max() * 1.1],
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
+        )
+
         st.plotly_chart(fig5, use_container_width=True)
+
 
 
 with st.expander("📊 Ver dados detalhados"):
