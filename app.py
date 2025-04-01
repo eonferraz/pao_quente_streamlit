@@ -352,9 +352,9 @@ with st.container(border=True):
         # Total de vendas com o produto
         total_vendas_produto = len(vendas_com_produto)
 
-        # Frequência de outros produtos nas mesmas vendas
+        # Frequência de outros produtos nas mesmas vendas (TOP 5)
         relacionados = df_relacionados[df_relacionados["DESCRICAO_PRODUTO"] != produto_selecionado]
-        freq_relacionados = relacionados["DESCRICAO_PRODUTO"].value_counts().reset_index()
+        freq_relacionados = relacionados["DESCRICAO_PRODUTO"].value_counts().head(5).reset_index()
         freq_relacionados.columns = ["PRODUTO", "FREQ"]
         freq_relacionados["PCT"] = freq_relacionados["FREQ"] / total_vendas_produto
 
