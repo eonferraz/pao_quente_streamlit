@@ -329,6 +329,7 @@ with st.container(border=True):
     df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TOTAL").fillna(0)
     ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
     df_pivot = df_pivot.reindex(ordem)
+    df_pivot = df_pivot[sorted(df_pivot.columns, key=lambda x: datetime.strptime(x.split(" à ")[0], "%d/%m"))]
 
     df_formatada = pd.DataFrame(index=df_pivot.index)
     colunas = df_pivot.columns.tolist()
