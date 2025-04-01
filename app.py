@@ -18,7 +18,7 @@ def carregar_dados():
     conn.close()
     return df
 
-st.title("📊 Dashboard de Faturamento - SX Comercial")
+st.title("Acompanhamento - Pão Quente")
 
 with st.spinner("🔄 Carregando dados..."):
     df = carregar_dados()
