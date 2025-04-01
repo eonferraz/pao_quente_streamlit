@@ -6,3 +6,4 @@ openpyxl
 datetime
 numpy
 networkx
+scipy
