@@ -390,9 +390,12 @@ with st.container(border=True):
             x, y = pos[node]
             node_x.append(x)
             node_y.append(y)
-            node_text.append(
-                f"{node}<br>{'Produto Selecionado' if node == produto_selecionado else f'{G[produto_selecionado][node]['weight']:.0%} das vendas'}"
-            )
+            if node == produto_selecionado:
+                legenda = "Produto Selecionado"
+            else:
+                pct = G[produto_selecionado][node]['weight']
+                legenda = f"Aparece em {pct:.1%} das vendas com {produto_selecionado}"            
+            node_text.append(f"{node}<br><span style='font-size:12px'>{legenda}</span>")            
             node_size.append(G.nodes[node]["size"])
 
         node_trace = go.Scatter(
