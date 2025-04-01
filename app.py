@@ -73,21 +73,24 @@ def carregar_dados():
         'UID=paulo.ferraz;'
         'PWD=Gs!^42j$G0f0^EI#ZjRv'
     )
-    df = pd.read_sql("SELECT * FROM PQ_VENDAS", conn)
+    df_vendas = pd.read_sql("SELECT * FROM PQ_VENDAS", conn)
+    df_metas = pd.read_sql("SELECT * FROM PQ_METAS", conn)
     conn.close()
-    return df
+    return df_vendas, df_metas
 
 # ====================
 # CARGA E PREPARO
 # ====================
 with st.spinner("🔄 Carregando dados..."):
-    df = carregar_dados()
+    df, metas = carregar_dados()
 
 df.columns = df.columns.str.strip().str.upper()
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
 df = df.dropna(subset=["DATA"])
 df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
 df["DIA"] = df["DATA"].dt.day
+
+metas.columns = metas.columns.str.strip().str.upper()
 
 # ====================
 # FILTROS
@@ -99,6 +102,7 @@ todos_meses = sorted(df["ANO_MES"].unique())
 meses_selecionados = st.sidebar.multiselect("Ano/Mês:", todos_meses, default=todos_meses)
 
 df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
+metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO-MES"].isin(meses_selecionados))]
 
 # ====================
 # DASHBOARD PRINCIPAL
@@ -109,19 +113,18 @@ with col1:
     fat_total = df_filt["TOTAL"].sum()
     qtd_vendas = df_filt["COD_VENDA"].nunique()
     ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
+    meta_total = metas_filt["VALOR_META"].sum()
 
     with st.container(border=True):
         st.metric("💰 Faturamento Total", f"R$ {fat_total:,.2f}".replace(",", "."))
 
     with st.container(border=True):
-        meta = fat_total * 1.1  # Exemplo: meta é 10% acima do realizado
-        st.metric("🎯 Meta de Faturamento", f"R$ {meta:,.2f}".replace(",", "."))
+        st.metric("🎯 Meta de Faturamento", f"R$ {meta_total:,.2f}".replace(",", "."))
 
     with st.container(border=True):
         st.metric("📊 Qtde de Vendas", qtd_vendas)
     with st.container(border=True):
         st.metric("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
-
 
 with col2:
     with st.container(border=True):
