@@ -19,14 +19,14 @@ st.markdown("""
         top: 0;
         background-color: #FFFFFF;
         z-index: 999;
-        padding: 10px 0 5px 0;
+        padding: 10px 2rem 5px 2rem;
         border-bottom: 2px solid #862E3A;
-    }
-    .header-container {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 0 2rem;
+    }
+    .header-fixed img {
+        width: 80px;
+        margin-right: 20px;
     }
     .header-title h1 {
         color: #862E3A;
@@ -53,12 +53,10 @@ logo_base64 = get_base64_image("logo.png")
 
 st.markdown(f"""
 <div class="header-fixed">
-  <div class="header-container">
-    <div><img src="data:image/png;base64,{logo_base64}" width="80" alt="Logo"></div>
-    <div class="header-title">
-      <h1>Dashboard de Vendas</h1>
-      <h4>Padaria Pão Quente</h4>
-    </div>
+  <img src="data:image/png;base64,{logo_base64}" alt="Logo">
+  <div class="header-title">
+    <h1>Dashboard de Vendas</h1>
+    <h4>Padaria Pão Quente</h4>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -112,12 +110,22 @@ with col1:
     qtd_vendas = df_filt["COD_VENDA"].nunique()
     ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
 
+    card_style = "min-height: 130px; display: flex; flex-direction: column; justify-content: center;"
+
     with st.container(border=True):
+        st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
         st.metric("💰 Faturamento Total", f"R$ {fat_total:,.2f}".replace(",", "."))
+        st.markdown("</div>", unsafe_allow_html=True)
+
     with st.container(border=True):
+        st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
         st.metric("📊 Qtde de Vendas", qtd_vendas)
+        st.markdown("</div>", unsafe_allow_html=True)
+
     with st.container(border=True):
+        st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
         st.metric("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
+        st.markdown("</div>", unsafe_allow_html=True)
 
 with col2:
     with st.container(border=True):
@@ -126,6 +134,7 @@ with col2:
                       text_auto=True, color_discrete_sequence=["#FE9C37"])
         fig1.update_layout(
             yaxis=dict(showticklabels=False, showgrid=False, zeroline=False, visible=False),
+            xaxis_tickformat="%Y-%m",
             xaxis_tickangle=-45,
             yaxis_tickprefix="R$ ",
             yaxis_tickformat=",.2f"
