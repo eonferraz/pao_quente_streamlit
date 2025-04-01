@@ -301,8 +301,6 @@ with col5:
 
 st.markdown("---")
 
-with st.expander("📊 Ver dados detalhados"):
-st.dataframe(df_filt, use_container_width=True)
 
 import io
 from openpyxl import Workbook
