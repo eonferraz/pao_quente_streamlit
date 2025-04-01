@@ -169,7 +169,7 @@ if st.session_state.get('editar_metas', False):
 # ====================
 # DASHBOARD PRINCIPAL
 # ====================
-col1, col2, col3 = st.columns([1, 2, 2])
+col1, col2, col3 = st.columns([0.7, 2.3, 2])
 
 with col1:
     fat_total = df_filt["TOTAL"].sum()
@@ -185,37 +185,31 @@ with col1:
 
     with st.container(border=True):
         st.metric("📊 Qtde de Vendas", qtd_vendas)
+
     with st.container(border=True):
         st.metric("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 with col2:
     with st.container(border=True):
         df_mes = df_filt.groupby("ANO_MES")["TOTAL"].sum().reset_index()
-        fig1 = px.bar(df_mes, x="ANO_MES", y="TOTAL", title="Faturamento por Mês",
-                      text_auto=True, color_discrete_sequence=["#FE9C37"])
+        df_meta_mes = metas_filt.groupby("ANO-MES")["VALOR_META"].sum().reset_index()
+        df_meta_mes.rename(columns={"ANO-MES": "ANO_MES"}, inplace=True)
+        df_merged = pd.merge(df_mes, df_meta_mes, on="ANO_MES", how="outer").fillna(0)
+        df_merged["PCT"] = df_merged["TOTAL"] / df_merged["VALOR_META"]
+
+        fig1 = px.bar(df_merged, x="ANO_MES", y=["VALOR_META", "TOTAL"],
+                      title="Faturamento vs Meta por Mês", barmode="group",
+                      text_auto=True, color_discrete_sequence=["#A4B494", "#FE9C37"])
+        fig1.add_scatter(x=df_merged["ANO_MES"], y=df_merged["PCT"],
+                         mode="lines+markers+text", name="% Realizado",
+                         text=df_merged["PCT"].map(lambda x: f"{x:.0%}"),
+                         textposition="top center",
+                         line=dict(color="#862E3A", dash="dot"), yaxis="y2")
+
         fig1.update_layout(
-            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False, visible=False),
-            xaxis=dict(type='category'),
-            xaxis_tickangle=-45,
-            yaxis_tickprefix="R$ ",
-            yaxis_tickformat=",.2f"
+            yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f"),
+            yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%"),
+            xaxis=dict(type='category', tickangle=-45)
         )
         st.plotly_chart(fig1, use_container_width=True)
 
