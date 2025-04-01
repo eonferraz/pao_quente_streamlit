@@ -8,6 +8,9 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Alignment
 from datetime import datetime
 import numpy as np
+from plotly import graph_objects as go
+import networkx as nx
+
 
 # ====================
 # CONFIG INICIAL
