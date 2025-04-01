@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import pyodbc
 import plotly.express as px
-from PIL import Image
+import base64
 
 # ====================
 # CONFIG INICIAL
@@ -26,6 +26,7 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: space-between;
+        padding: 0 2rem;
     }
     .header-title h1 {
         color: #862E3A;
@@ -43,11 +44,17 @@ st.markdown("""
 # ====================
 # TOPO FIXO COM LOGO E TÍTULO
 # ====================
-logo = Image.open("logo.png")
-st.markdown("""
+def get_base64_image(img_path):
+    with open(img_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+logo_base64 = get_base64_image("logo.png")
+
+st.markdown(f"""
 <div class="header-fixed">
   <div class="header-container">
-    <div><img src="data:image/png;base64,""" + st.image(logo, width=80, output_format="png").image_to_url(logo) + """" alt="Logo"></div>
+    <div><img src="data:image/png;base64,{logo_base64}" width="80" alt="Logo"></div>
     <div class="header-title">
       <h1>Dashboard de Vendas</h1>
       <h4>Padaria Pão Quente</h4>
