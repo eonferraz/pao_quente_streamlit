@@ -5,7 +5,7 @@ import plotly.express as px
 
 st.set_page_config(page_title="Dashboard SX Comercial", layout="wide")
 
-# Função de conexão
+# Conexão com SQL Server
 @st.cache_data(ttl=600)
 def carregar_dados():
     conn = pyodbc.connect(
@@ -26,61 +26,60 @@ with st.spinner("🔄 Carregando dados..."):
 # Padronizar colunas
 df.columns = df.columns.str.strip().str.upper()
 
-# Ajuste da data
+# Converter datas e criar ANO_MES
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
 df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
 
-# Filtro de UNs com opção "Selecionar todas"
+# Sidebar com filtros
+st.sidebar.header("🔎 Filtros")
+
+# Filtro de UNs
 todas_uns = sorted(df["UN"].dropna().unique())
-un_selecionadas = st.multiselect("🏢 Selecionar UN(s):", options=todas_uns, default=todas_uns)
+un_selecionadas = st.sidebar.multiselect("Selecionar UN(s):", options=todas_uns, default=todas_uns)
 
-df_filtrado = df[df["UN"].isin(un_selecionadas)]
+# Filtro de ANO_MES
+todos_meses = sorted(df["ANO_MES"].dropna().unique())
+meses_selecionados = st.sidebar.multiselect("Selecionar Ano/Mês:", options=todos_meses, default=todos_meses)
 
-# Cálculos
-faturamento = df_filtrado.groupby("UN")["TOTAL"].sum().reset_index(name="FATURAMENTO")
-clientes = df_filtrado.groupby("UN")["COD_VENDA"].nunique().reset_index(name="CLIENTES")
-ticket = faturamento.merge(clientes, on="UN")
-ticket["TICKET_MEDIO"] = ticket["FATURAMENTO"] / ticket["CLIENTES"]
+# Aplicar filtros
+df_filtrado = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
 
-# Layout em colunas
-col1, col2, col3 = st.columns(3)
+# =======================
+# 🔷 GRÁFICO EMPILHADO
+# =======================
+st.subheader("📊 Faturamento Mensal por UN (Empilhado)")
+df_empilhado = df_filtrado.groupby(["ANO_MES", "UN"])["TOTAL"].sum().reset_index()
 
-# Gráfico 1 - Faturamento
-with col1:
-    st.subheader("💰 Faturamento por UN")
-    fig1 = px.bar(
-        faturamento,
-        x="UN",
-        y="FATURAMENTO",
-        text_auto=".2s",
-        color_discrete_sequence=["#3A2E86"]
-    )
-    st.plotly_chart(fig1, use_container_width=True)
+fig_empilhado = px.bar(
+    df_empilhado,
+    x="ANO_MES",
+    y="TOTAL",
+    color="UN",
+    text_auto=".2s",
+    title="Faturamento Empilhado por Mês e UN",
+    color_discrete_sequence=px.colors.qualitative.Dark24
+)
+st.plotly_chart(fig_empilhado, use_container_width=True)
 
-# Gráfico 2 - Clientes
-with col2:
-    st.subheader("👥 Clientes por UN")
-    fig2 = px.bar(
-        clientes,
-        x="UN",
-        y="CLIENTES",
-        text_auto=True,
-        color_discrete_sequence=["#379CFE"]
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+# =======================
+# 🔶 GRÁFICO DE ROSCA
+# =======================
+st.subheader("🍩 Participação no Faturamento por UN")
+faturamento_total = df_filtrado.groupby("UN")["TOTAL"].sum().reset_index()
 
-# Gráfico 3 - Ticket Médio
-with col3:
-    st.subheader("💳 Ticket Médio por UN")
-    fig3 = px.bar(
-        ticket,
-        x="UN",
-        y="TICKET_MEDIO",
-        text_auto=".2f",
-        color_discrete_sequence=["#94B4A4"]
-    )
-    st.plotly_chart(fig3, use_container_width=True)
+fig_rosca = px.pie(
+    faturamento_total,
+    names="UN",
+    values="TOTAL",
+    hole=0.5,
+    title="Distribuição de Faturamento",
+    color_discrete_sequence=px.colors.sequential.Teal
+)
+fig_rosca.update_traces(textposition="inside", textinfo="percent+label")
+st.plotly_chart(fig_rosca, use_container_width=True)
 
-# Mostrar tabela detalhada abaixo, se quiser
-with st.expander("🔍 Ver dados detalhados"):
+# =======================
+# 🔍 TABELA DETALHADA
+# =======================
+with st.expander("📋 Ver dados detalhados"):
     st.dataframe(df_filtrado, use_container_width=True)
