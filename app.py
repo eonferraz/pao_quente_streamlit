@@ -313,7 +313,6 @@ st.markdown("---")
 
 
 
-#TOP 10 PRODUTOS
 with st.container(border=True):
     st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos e Correlações</h4>", unsafe_allow_html=True)
 
@@ -412,16 +411,6 @@ with st.container(border=True):
                               ))
 
         st.plotly_chart(fig_grafo, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
 
 
 
