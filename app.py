@@ -240,7 +240,6 @@ with col4:
         df_dia = df_filt.groupby("DATA")["TOTAL"].sum().reset_index()
         df_dia["FAT_ACUM"] = df_dia["TOTAL"].cumsum()
 
-        # Meta acumulada por dia
         if not metas_filt.empty:
             meta_mes_total = metas_filt["VALOR_META"].sum()
             dias_do_mes = df_dia["DATA"].dt.days_in_month.iloc[0]  # assume mesmo mês
@@ -248,22 +247,27 @@ with col4:
 
             df_dia["META_DIA"] = meta_dia
             df_dia["META_ACUM"] = df_dia["META_DIA"].cumsum()
-
-            # Percentual acumulado
             df_dia["PCT"] = df_dia["FAT_ACUM"] / df_dia["META_ACUM"]
 
+        # Gráfico principal
         fig4 = px.line(df_dia, x="DATA", y="FAT_ACUM", title="Faturamento Acumulado no Mês",
                        markers=True, color_discrete_sequence=["#862E3A"])
 
+        # Meta acumulada
         if "META_ACUM" in df_dia.columns:
-            fig4.add_scatter(x=df_dia["DATA"], y=df_dia["META_ACUM"], mode="lines+markers", name="Meta Acumulada",
+            fig4.add_scatter(x=df_dia["DATA"], y=df_dia["META_ACUM"],
+                             mode="lines+markers", name="Meta Acumulada",
                              line=dict(color="#A4B494", dash="dot"))
-            fig4.add_scatter(x=df_dia["DATA"], y=df_dia["PCT"], mode="lines+markers+text", name="% Realizado",
-                             text=df_dia["PCT"].map(lambda x: f"{x:.0%}"),
-                             textposition="top center",
-                             line=dict(color="#FE9C37", dash="dot"),
+
+            # Cor dinâmica da linha % realizado
+            cor_pct = "#A4B494" if df_dia["PCT"].iloc[-1] >= 1 else "#862E3A"
+
+            fig4.add_scatter(x=df_dia["DATA"], y=df_dia["PCT"],
+                             mode="lines+markers", name="% Realizado",
+                             line=dict(color=cor_pct, dash="dot"),
                              yaxis="y2")
 
+        # Layout final
         fig4.update_layout(
             yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f"),
             yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%", range=[0, 1.5]),
