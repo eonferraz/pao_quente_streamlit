@@ -92,6 +92,62 @@ df["DIA"] = df["DATA"].dt.day
 
 metas.columns = metas.columns.str.strip().str.upper()
 
+
+   with st.container(border=True):
+        st.metric("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
+
+# ====================
+# EDIÇÃO DE METAS
+# ====================
+st.markdown("---")
+with st.container(border=True):
+    if st.button("✏️ Editar Metas de Faturamento"):
+        st.session_state['editar_metas'] = True
+
+if st.session_state.get('editar_metas', False):
+    st.markdown("### 🗓️ Edição de Metas por Unidade - Ano 2025")
+
+    meses_2025 = pd.date_range(start="2025-01-01", end="2025-12-01", freq='MS').strftime('%Y-%m')
+    unidades = ["P1", "P3", "P4", "P5"]
+
+    df_input = pd.DataFrame(index=meses_2025, columns=unidades)
+    df_input.index.name = "ANO-MES"
+
+    edited_df = st.data_editor(df_input.fillna(""), num_rows="dynamic", use_container_width=True, key="meta_editor")
+
+    if st.button("💾 Salvar Metas"):
+        try:
+            conn = pyodbc.connect(
+                'DRIVER={ODBC Driver 17 for SQL Server};'
+                'SERVER=sx-global.database.windows.net;'
+                'DATABASE=sx_comercial;'
+                'UID=paulo.ferraz;'
+                'PWD=Gs!^42j$G0f0^EI#ZjRv'
+            )
+            cursor = conn.cursor()
+            for ano_mes in edited_df.index:
+                for loja in unidades:
+                    valor = edited_df.loc[ano_mes, loja]
+                    if valor != "" and not pd.isna(valor):
+                        cursor.execute("""
+                            IF EXISTS (SELECT 1 FROM PQ_METAS WHERE [ANO-MES] = ? AND LOJA = ?)
+                                UPDATE PQ_METAS SET VALOR_META = ? WHERE [ANO-MES] = ? AND LOJA = ?
+                            ELSE
+                                INSERT INTO PQ_METAS ([ANO-MES], LOJA, VALOR_META) VALUES (?, ?, ?)
+                        """, ano_mes, loja, valor, ano_mes, loja, ano_mes, loja, valor)
+            conn.commit()
+            conn.close()
+            st.success("✅ Metas salvas com sucesso!")
+            st.session_state['editar_metas'] = False
+        except Exception as e:
+            st.error(f"Erro ao salvar as metas: {e}")
+
+
+
+
+
+
+
 # ====================
 # FILTROS
 # ====================
