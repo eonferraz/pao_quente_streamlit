@@ -162,13 +162,11 @@ if st.session_state.get('editar_metas', False):
         if st.button("❌ Cancelar"):
             st.session_state['editar_metas'] = False
 
-
-
-
-
 # ====================
 # DASHBOARD PRINCIPAL
 # ====================
+col1, col2, col3 = st.columns([0.7, 2.3, 2])
+
 col1, col2, col3 = st.columns([0.7, 2.3, 2])
 
 with col1:
@@ -207,7 +205,8 @@ with col2:
                          line=dict(color="#862E3A", dash="dot"), yaxis="y2")
 
         fig1.update_layout(
-            yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f"),
+            yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f",
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)),
             yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%", range=[0, 1.5]),
             xaxis=dict(type='category', tickangle=-45)
         )
@@ -231,7 +230,7 @@ with col3:
                           color_discrete_sequence=px.colors.sequential.RdBu)
             fig3.update_traces(textposition="inside", textinfo="percent+label")
             st.plotly_chart(fig3, use_container_width=True)
-
+            
 st.markdown("---")
 
 col4, col5 = st.columns(2)
