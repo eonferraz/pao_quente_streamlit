@@ -45,7 +45,7 @@ with st.spinner("Carregando dados..."):
 df.columns = df.columns.str.strip().str.upper()
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
 df = df.dropna(subset=["DATA"])
-df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
+df["ANO_MES"] = df["DATA"].dt.strftime("%Y-%m")
 df["DIA"] = df["DATA"].dt.day
 
 # ====================
