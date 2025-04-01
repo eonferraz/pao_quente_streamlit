@@ -232,15 +232,43 @@ with col3:
 
 st.markdown("---")
 
-col4, col5 = st.columns(2)
-
 with col4:
     with st.container(border=True):
-        df_dia = df_filt.groupby("DATA")["TOTAL"].sum().cumsum().reset_index(name="FAT_ACUM")
+        # Faturamento acumulado por dia
+        df_dia = df_filt.groupby("DATA")["TOTAL"].sum().reset_index()
+        df_dia["FAT_ACUM"] = df_dia["TOTAL"].cumsum()
+
+        # Meta acumulada por dia
+        if not metas_filt.empty:
+            meta_mes_total = metas_filt["VALOR_META"].sum()
+            dias_do_mes = df_dia["DATA"].dt.days_in_month.iloc[0]  # assume mesmo mês
+            meta_dia = meta_mes_total / dias_do_mes
+
+            df_dia["META_DIA"] = meta_dia
+            df_dia["META_ACUM"] = df_dia["META_DIA"].cumsum()
+
+            # Percentual acumulado
+            df_dia["PCT"] = df_dia["FAT_ACUM"] / df_dia["META_ACUM"]
+
         fig4 = px.line(df_dia, x="DATA", y="FAT_ACUM", title="Faturamento Acumulado no Mês",
                        markers=True, color_discrete_sequence=["#862E3A"])
-        fig4.update_layout(yaxis_tickprefix="R$ ", yaxis_tickformat=",.2f")
+
+        if "META_ACUM" in df_dia.columns:
+            fig4.add_scatter(x=df_dia["DATA"], y=df_dia["META_ACUM"], mode="lines+markers", name="Meta Acumulada",
+                             line=dict(color="#A4B494", dash="dot"))
+            fig4.add_scatter(x=df_dia["DATA"], y=df_dia["PCT"], mode="lines+markers+text", name="% Realizado",
+                             text=df_dia["PCT"].map(lambda x: f"{x:.0%}"),
+                             textposition="top center",
+                             line=dict(color="#FE9C37", dash="dot"),
+                             yaxis="y2")
+
+        fig4.update_layout(
+            yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f"),
+            yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%", range=[0, 1.5]),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
+        )
         st.plotly_chart(fig4, use_container_width=True)
+
 
 
 with col5:
