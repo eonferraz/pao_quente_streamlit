@@ -109,7 +109,7 @@ with col1:
     qtd_vendas = df_filt["COD_VENDA"].nunique()
     ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
 
-    card_style = "height: 50px; display: flex; flex-direction: column; justify-content: center;"
+    card_style = "height: 40px; display: flex; flex-direction: column; justify-content: center;"
 
     with st.container(border=True):
         st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
