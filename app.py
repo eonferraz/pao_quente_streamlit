@@ -300,6 +300,59 @@ with col5:
         st.plotly_chart(fig5, use_container_width=True)
 
 
+# COMPARATIVO SAMANAL
+import calendar
+
+with st.container(border=True):
+    st.markdown("### 📈 Evolução Semanal por Dia da Semana")
+
+    df_semana = df_filt.copy()
+    df_semana["SEMANA"] = df_semana["DATA"].dt.isocalendar().week
+    df_semana["ANO"] = df_semana["DATA"].dt.year
+    df_semana["DIA_SEMANA"] = df_semana["DATA"].dt.day_name(locale="pt_BR")
+    df_semana["DIA_SEMANA"] = df_semana["DIA_SEMANA"].str.lower()
+
+    # Início e fim da semana (para título das colunas)
+    df_semana["INICIO_SEMANA"] = df_semana["DATA"] - pd.to_timedelta(df_semana["DATA"].dt.weekday, unit="d")
+    df_semana["FIM_SEMANA"] = df_semana["INICIO_SEMANA"] + pd.Timedelta(days=6)
+    df_semana["PERIODO"] = df_semana["INICIO_SEMANA"].dt.strftime('%d/%m') + " à " + df_semana["FIM_SEMANA"].dt.strftime('%d/%m')
+
+    # Agrupar por semana e dia da semana
+    df_grouped = df_semana.groupby(["ANO", "SEMANA", "PERIODO", "DIA_SEMANA"])["TOTAL"].sum().reset_index()
+
+    # Pivotar
+    df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TOTAL").fillna(0)
+
+    # Ordenar os dias da semana manualmente
+    dias_ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    df_pivot = df_pivot.reindex(dias_ordem)
+
+    # Calcular variação percentual
+    df_formatada = pd.DataFrame(index=df_pivot.index)
+    colunas = df_pivot.columns.tolist()
+
+    for i, col in enumerate(colunas):
+        col_fmt = []
+        for idx in df_pivot.index:
+            valor = df_pivot.loc[idx, col]
+            texto = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+            if i > 0:
+                valor_ant = df_pivot.loc[idx, colunas[i - 1]]
+                if valor_ant > 0:
+                    variacao = (valor - valor_ant) / valor_ant
+                    cor = "green" if variacao > 0 else "red"
+                    texto += f"<br><span style='color:{cor}; font-size: 12px'>{variacao:+.2%}</span>"
+            col_fmt.append(texto)
+        df_formatada[col] = col_fmt
+
+    # Renderizar com HTML
+    st.write("Comparativo por semana (com variação sobre a anterior):")
+    st.markdown(
+        df_formatada.to_html(escape=False, index=True).replace("<th>", "<th style='text-align: center'>"),
+        unsafe_allow_html=True
+    )
+
 
 with st.expander("📊 Ver dados detalhados"):
     st.dataframe(df_filt, use_container_width=True)
