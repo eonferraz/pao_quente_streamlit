@@ -304,68 +304,48 @@ st.markdown("---")
 # COMPARATIVO SAMANAL
 import calendar
 
-with st.container(border=True):
-    st.markdown("### 📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal)")
+# Geração de tabela com HTML e cor de fundo dinâmica por célula
+tabela_html = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
+tabela_html += "<thead><tr><th style='padding: 6px; border: 1px solid #555;'>DIA_SEMANA</th>"
 
-    # Selecionar mês
-    df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
-    meses_disp = sorted(df_filt["MES_ANO"].unique())
-    meses_selecionados = st.multiselect("Selecionar Mês(es):", meses_disp, default=[meses_disp[-1]])
-    df_mes = df_filt[df_filt["MES_ANO"].isin(meses_selecionados)].copy()
-    df_mes["SEMANA"] = df_mes["DATA"].dt.isocalendar().week
-    df_mes["ANO"] = df_mes["DATA"].dt.year
-    dias_traduzidos = {
-        "Monday": "segunda-feira",
-        "Tuesday": "terça-feira",
-        "Wednesday": "quarta-feira",
-        "Thursday": "quinta-feira",
-        "Friday": "sexta-feira",
-        "Saturday": "sábado",
-        "Sunday": "domingo"
-    }
-    df_mes["DIA_SEMANA"] = df_mes["DATA"].dt.day_name().map(dias_traduzidos)
+# Cabeçalhos
+for col in colunas:
+    tabela_html += f"<th style='padding: 6px; border: 1px solid #555;'>{col}</th>"
+tabela_html += "</tr></thead><tbody>"
 
+# Linhas da tabela
+for idx in df_formatada.index:
+    tabela_html += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{idx}</td>"
+    for col in colunas:
+        celula = df_formatada.loc[idx, col]
 
-    # Início e fim da semana (para título)
-    df_mes["INICIO_SEMANA"] = df_mes["DATA"] - pd.to_timedelta(df_mes["DATA"].dt.weekday, unit="d")
-    df_mes["FIM_SEMANA"] = df_mes["INICIO_SEMANA"] + pd.Timedelta(days=6)
-    df_mes["PERIODO"] = df_mes["INICIO_SEMANA"].dt.strftime('%d/%m') + " à " + df_mes["FIM_SEMANA"].dt.strftime('%d/%m')
+        # Tentar extrair o valor percentual
+        if "<span" in celula:
+            try:
+                pct_str = celula.split('>')[2].split('%')[0].replace("+", "").replace(",", ".")
+                pct = float(pct_str) / 100
+            except:
+                pct = None
+        else:
+            pct = None
 
-    # Agrupamento
-    df_grouped = df_mes.groupby(["SEMANA", "PERIODO", "DIA_SEMANA"])["TOTAL"].sum().reset_index()
+        # Definir a cor de fundo
+        if pct is None:
+            fundo = "#f0f0f0"
+        elif pct >= 0:
+            intensidade = int(255 - min(pct, 1) * 155)
+            fundo = f"rgb({intensidade}, 255, {intensidade})"
+        else:
+            intensidade = int(255 - min(abs(pct), 1) * 155)
+            fundo = f"rgb(255, {intensidade}, {intensidade})"
 
-    # Pivotar
-    df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TOTAL").fillna(0)
+        tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo};'>{celula}</td>"
+    tabela_html += "</tr>"
+tabela_html += "</tbody></table>"
 
-    # Ordenar os dias
-    ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
-    df_pivot = df_pivot.reindex(ordem)
+# Mostrar
+st.markdown(tabela_html, unsafe_allow_html=True)
 
-    # Formatado com variações
-    df_formatada = pd.DataFrame(index=df_pivot.index)
-    colunas = df_pivot.columns.tolist()
-
-    for i, col in enumerate(colunas):
-        col_fmt = []
-        for idx in df_pivot.index:
-            valor = df_pivot.loc[idx, col]
-            texto = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-            if i > 0:
-                valor_ant = df_pivot.loc[idx, colunas[i - 1]]
-                if valor_ant > 0:
-                    variacao = (valor - valor_ant) / valor_ant
-                    cor = "green" if variacao > 0 else "red"
-                    texto += f"<br><span style='color:{cor}; font-size: 12px'>{variacao:+.2%}</span>"
-            col_fmt.append(texto)
-        df_formatada[col] = col_fmt
-
-    st.markdown(
-        df_formatada.to_html(escape=False, index=True).replace("<th>", "<th style='text-align: center'>"),
-        unsafe_allow_html=True
-    )
-
-st.markdown("---")
 
 with st.expander("📊 Ver dados detalhados"):
     st.dataframe(df_filt, use_container_width=True)
