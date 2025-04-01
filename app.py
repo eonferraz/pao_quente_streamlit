@@ -306,7 +306,6 @@ st.markdown("---")
 
 
 with st.container(border=True):
-    st.dataframe(df_filt, use_container_width=True)
     st.markdown("<h4 style='color:#862E3A;'>📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal com Cores)</h4>", unsafe_allow_html=True)
 
     df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
@@ -333,7 +332,6 @@ with st.container(border=True):
 
     df_formatada = pd.DataFrame(index=df_pivot.index)
     colunas = df_pivot.columns.tolist()
-
     variacoes_pct = pd.DataFrame(index=df_pivot.index)
 
     for i, col in enumerate(colunas):
@@ -369,15 +367,19 @@ with st.container(border=True):
             celula = df_formatada.loc[idx, col]
             pct = variacoes_pct.loc[idx, col]
 
-            # Cor de fundo
-            if pct is None:
+            # Cor de fundo com proteção
+            if pct is None or pd.isna(pct):
                 fundo = "#f0f0f0"
-            elif pct >= 0:
-                intensidade = int(255 - min(pct, 1) * 155)
-                fundo = f"rgb({intensidade}, 255, {intensidade})"
             else:
-                intensidade = int(255 - min(abs(pct), 1) * 155)
-                fundo = f"rgb(255, {intensidade}, {intensidade})"
+                try:
+                    if pct >= 0:
+                        intensidade = int(255 - min(pct, 1) * 155)
+                        fundo = f"rgb({intensidade}, 255, {intensidade})"
+                    else:
+                        intensidade = int(255 - min(abs(pct), 1) * 155)
+                        fundo = f"rgb(255, {intensidade}, {intensidade})"
+                except:
+                    fundo = "#f0f0f0"
 
             tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo};'>{celula}</td>"
         tabela_html += "</tr>"
@@ -402,7 +404,7 @@ with st.container(border=True):
             linha.append(round(val, 2))
         ws.append(linha)
 
-    # Estilização
+    # Estilização no Excel
     for row in ws.iter_rows(min_row=2, min_col=2):
         for cell in row:
             pct_row = cell.row - 2
