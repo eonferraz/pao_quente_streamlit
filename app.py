@@ -10,7 +10,7 @@ from datetime import datetime
 import numpy as np
 from plotly import graph_objects as go
 import networkx as nx
-
+import scipy
 
 # ====================
 # CONFIG INICIAL
