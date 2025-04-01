@@ -381,7 +381,7 @@ with st.container(border=True):
                 except:
                     fundo = "#f0f0f0"
 
-            tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo};'>{celula}</td>"
+            tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111;'>{celula}</td>"
         tabela_html += "</tr>"
     tabela_html += "</tbody></table>"
 
