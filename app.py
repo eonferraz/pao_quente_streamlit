@@ -309,6 +309,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Alignment
 
 with st.container(border=True):
+    st.dataframe(df_filt, use_container_width=True)
     st.markdown("<h4 style='color:#862E3A;'>📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal com Cores)</h4>", unsafe_allow_html=True)
 
     df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
