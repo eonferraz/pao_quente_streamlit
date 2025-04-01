@@ -86,7 +86,7 @@ with st.spinner("Carregando dados..."):
 df.columns = df.columns.str.strip().str.upper()
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
 df = df.dropna(subset=["DATA"])
-df["ANO_MES"] = df["DATA"].dt.strftime("%Y-%m")
+df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
 df["DIA"] = df["DATA"].dt.day
 
 # ====================
@@ -110,7 +110,7 @@ with col1:
     qtd_vendas = df_filt["COD_VENDA"].nunique()
     ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
 
-    card_style = "min-height: 130px; display: flex; flex-direction: column; justify-content: center;"
+    card_style = "height: 160px; display: flex; flex-direction: column; justify-content: center;"
 
     with st.container(border=True):
         st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
@@ -134,7 +134,7 @@ with col2:
                       text_auto=True, color_discrete_sequence=["#FE9C37"])
         fig1.update_layout(
             yaxis=dict(showticklabels=False, showgrid=False, zeroline=False, visible=False),
-            xaxis_tickformat="%Y-%m",
+            xaxis=dict(type='category'),
             xaxis_tickangle=-45,
             yaxis_tickprefix="R$ ",
             yaxis_tickformat=",.2f"
