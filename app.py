@@ -305,6 +305,7 @@ with col5:
 
 st.markdown("---")
 
+#TOP 10 PRODUTOS
 with st.container(border=True):
     st.markdown("<h4 style='color:#862E3A;'>🏆 Top 10 Produtos por Faturamento</h4>", unsafe_allow_html=True)
 
@@ -323,6 +324,30 @@ with st.container(border=True):
     fig_top.update_layout(margin=dict(t=40, l=0, r=0, b=0))
 
     st.plotly_chart(fig_top, use_container_width=True)
+
+with st.container(border=True):
+    st.markdown("<h4 style='color:#862E3A;'>🛒 Correlação entre Produtos (Coocorrência)</h4>", unsafe_allow_html=True)
+
+    # Construir tabela de coocorrência
+    df_associacao = df_filt[["COD_VENDA", "DESCRICAO_PRODUTO"]].dropna().drop_duplicates()
+    crosstab = pd.crosstab(df_associacao["COD_VENDA"], df_associacao["DESCRICAO_PRODUTO"])
+    matriz_corr = crosstab.T.dot(crosstab)  # Coocorrência absoluta
+    np.fill_diagonal(matriz_corr.values, 0)  # Zerar diagonal principal
+
+    # Pegar top N produtos
+    top_produtos = matriz_corr.sum().sort_values(ascending=False).head(10).index
+    matriz_top = matriz_corr.loc[top_produtos, top_produtos]
+
+    fig = px.imshow(
+        matriz_top,
+        text_auto=True,
+        color_continuous_scale="Blues",
+        labels=dict(color="Frequência"),
+        title="Produtos Comprados Juntos (Top 10)"
+    )
+    fig.update_layout(margin=dict(t=40, l=0, r=0, b=0))
+
+    st.plotly_chart(fig, use_container_width=True)
 
 
 #Evolução de venda por dia da semana
