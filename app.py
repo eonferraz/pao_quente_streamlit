@@ -109,21 +109,21 @@ with col1:
     qtd_vendas = df_filt["COD_VENDA"].nunique()
     ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
 
-    card_style = "height: 80px; display: flex; flex-direction: column; justify-content: center;"
+    card_style = "height: 50px; display: flex; flex-direction: column; justify-content: center;"
 
     with st.container(border=True):
         st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
-        st.metric("💰 Faturamento Total", f"R$ {fat_total:,.2f}".replace(",", "."))
+        st.metric("Faturamento", f"R$ {fat_total:,.2f}".replace(",", "."))
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
         st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
-        st.metric("📊 Qtde de Vendas", qtd_vendas)
+        st.metric("Qtde de Vendas", qtd_vendas)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
         st.markdown(f"<div style='{card_style}'>", unsafe_allow_html=True)
-        st.metric("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
+        st.metric("Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
         st.markdown("</div>", unsafe_allow_html=True)
 
 with col2:
