@@ -113,21 +113,15 @@ with col1:
     with st.container(border=True):
         st.metric("💰 Faturamento Total", f"R$ {fat_total:,.2f}".replace(",", "."))
 
-    # Gráfico de meta entre os cards
     with st.container(border=True):
-        df_meta = pd.DataFrame({
-            "Categoria": ["Meta", "Realizado"],
-            "Valor": [fat_total * 1.1, fat_total]  # Exemplo: meta é 10% acima do real
-        })
-        fig_meta = px.bar(df_meta, x="Categoria", y="Valor", title="Meta vs Realizado",
-                          text_auto=True, color_discrete_sequence=["#A4B494", "#862E3A"])
-        fig_meta.update_layout(yaxis_tickprefix="R$ ", yaxis_tickformat=",.2f")
-        st.plotly_chart(fig_meta, use_container_width=True)
+        meta = fat_total * 1.1  # Exemplo: meta é 10% acima do realizado
+        st.metric("🎯 Meta de Faturamento", f"R$ {meta:,.2f}".replace(",", "."))
 
     with st.container(border=True):
         st.metric("📊 Qtde de Vendas", qtd_vendas)
     with st.container(border=True):
         st.metric("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
+
 
 with col2:
     with st.container(border=True):
