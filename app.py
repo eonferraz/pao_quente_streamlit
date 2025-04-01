@@ -315,7 +315,17 @@ with st.container(border=True):
     df_mes = df_filt[df_filt["MES_ANO"] == mes_selecionado].copy()
     df_mes["SEMANA"] = df_mes["DATA"].dt.isocalendar().week
     df_mes["ANO"] = df_mes["DATA"].dt.year
-    df_mes["DIA_SEMANA"] = df_mes["DATA"].dt.day_name(locale="pt_BR").str.lower()
+    dias_traduzidos = {
+        "Monday": "segunda-feira",
+        "Tuesday": "terça-feira",
+        "Wednesday": "quarta-feira",
+        "Thursday": "quinta-feira",
+        "Friday": "sexta-feira",
+        "Saturday": "sábado",
+        "Sunday": "domingo"
+    }
+    df_mes["DIA_SEMANA"] = df_mes["DATA"].dt.day_name().map(dias_traduzidos)
+
 
     # Início e fim da semana (para título)
     df_mes["INICIO_SEMANA"] = df_mes["DATA"] - pd.to_timedelta(df_mes["DATA"].dt.weekday, unit="d")
