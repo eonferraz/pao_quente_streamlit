@@ -165,7 +165,6 @@ if st.session_state.get('editar_metas', False):
 # ====================
 # DASHBOARD PRINCIPAL
 # ====================
-col1, col2, col3 = st.columns([0.7, 2.3, 2])
 
 col1, col2, col3 = st.columns([0.7, 2.3, 2])
 
