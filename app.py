@@ -212,7 +212,7 @@ with col2:
             texttemplate="R$ %{y:,.0f}",
             textposition="inside",
             textangle=-90,
-            textfont_size=14,
+            textfont_size=16,
             insidetextanchor="start"
         )    
 
@@ -224,7 +224,7 @@ with col2:
             name="% Realizado",
             line=dict(color="#862E3A", dash="dot"),
             yaxis="y2",
-            marker=dict(size=6)
+            marker=dict(size=8)
         )
 
         # Adicionando % como annotations (fundo vermelho, texto branco)
