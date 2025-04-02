@@ -210,11 +210,11 @@ with col2:
 
         fig1.update_traces(
             texttemplate="R$ %{y:,.0f}",
-            textposition="outside",
+            textposition="inside",
             textangle=-90,
             textfont_size=14,
             insidetextanchor="start"
-        )
+        )    
 
         # Linha % realizado (sem texto, faremos manualmente)
         fig1.add_scatter(
