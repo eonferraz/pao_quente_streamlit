@@ -205,19 +205,58 @@ with col2:
         fig1 = px.bar(df_merged, x="ANO_MES", y=["VALOR_META", "TOTAL"],
                       title="Faturamento vs Meta por Mês", barmode="group",
                       text_auto=True, color_discrete_sequence=["#A4B494", "#FE9C37"])
-        fig1.add_scatter(x=df_merged["ANO_MES"], y=df_merged["PCT"],
-                         mode="lines+markers+text", name="% Realizado",
-                         text=df_merged["PCT"].map(lambda x: f"{x:.0%}"),
-                         textposition="top center",
-                         line=dict(color="#862E3A", dash="dot"), yaxis="y2")
+
+        fig1.update_traces(textfont_size=14)
+
+        fig1.add_scatter(
+            x=df_merged["ANO_MES"],
+            y=df_merged["PCT"],
+            mode="lines+markers+text",
+            name="% Realizado",
+            text=df_merged["PCT"].map(lambda x: f"{x:.0%}"),
+            textposition="top center",
+            line=dict(color="#862E3A", dash="dot"),
+            yaxis="y2"
+        )
 
         fig1.update_layout(
-            yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f"),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
-            yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%", range=[0, 1.5]),
-            xaxis=dict(type='category', tickangle=-45)
+            yaxis=dict(
+                title="R$",
+                tickprefix="R$ ",
+                tickformat=",.0f",
+                showticklabels=False,
+                showline=False,
+                zeroline=False,
+                showgrid=False
+            ),
+            yaxis2=dict(
+                overlaying="y",
+                side="right",
+                tickformat=".0%",
+                title="%",
+                range=[0, 1.5],
+                showticklabels=False,
+                showline=False,
+                zeroline=False
+            ),
+            xaxis=dict(
+                type='category',
+                tickangle=-45,
+                showgrid=False
+            ),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white'
         )
+
         st.plotly_chart(fig1, use_container_width=True)
+
 
 with col3:
     with st.container(border=True):
