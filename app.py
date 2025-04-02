@@ -202,34 +202,46 @@ with col2:
         df_merged = pd.merge(df_mes, df_meta_mes, on="ANO_MES", how="outer").fillna(0)
         df_merged["PCT"] = df_merged["TOTAL"] / df_merged["VALOR_META"]
 
-        # Criação do gráfico sem text_auto
         fig1 = px.bar(
             df_merged, x="ANO_MES", y=["VALOR_META", "TOTAL"],
             title="Faturamento vs Meta por Mês", barmode="group",
             color_discrete_sequence=["#A4B494", "#FE9C37"]
         )
 
-        # Adicionando os textos manualmente nas barras
         fig1.update_traces(
             texttemplate="R$ %{y:,.0f}",
-            textposition="inside",
+            textposition="outside",
             textangle=-90,
-            textfont_size=14
+            textfont_size=14,
+            insidetextanchor="start"
         )
 
-        # Linha de % realizado
+        # Linha % realizado (sem texto, faremos manualmente)
         fig1.add_scatter(
             x=df_merged["ANO_MES"],
             y=df_merged["PCT"],
-            mode="lines+markers+text",
+            mode="lines+markers",
             name="% Realizado",
-            text=df_merged["PCT"].map(lambda x: f"{x:.0%}"),
-            textposition="top center",
             line=dict(color="#862E3A", dash="dot"),
-            yaxis="y2"
+            yaxis="y2",
+            marker=dict(size=6)
         )
 
-        # Atualizando layout
+        # Adicionando % como annotations (fundo vermelho, texto branco)
+        for i, row in df_merged.iterrows():
+            fig1.add_annotation(
+                x=row["ANO_MES"],
+                y=row["PCT"],
+                text=f"{row['PCT']:.0%}",
+                showarrow=False,
+                font=dict(color="white", size=12),
+                align="center",
+                bgcolor="#862E3A",
+                borderpad=4,
+                yanchor="bottom"
+            )
+
+        # Layout geral
         fig1.update_layout(
             yaxis=dict(
                 title="R$",
@@ -268,6 +280,7 @@ with col2:
         )
 
         st.plotly_chart(fig1, use_container_width=True)
+
 
 
 with col3:
