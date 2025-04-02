@@ -238,7 +238,8 @@ with col2:
                 align="center",
                 bgcolor="#862E3A",
                 borderpad=4,
-                yanchor="bottom"
+                yanchor="top",
+                yshift=8  # opcional: afasta levemente o texto da linha
             )
 
         # Layout geral
