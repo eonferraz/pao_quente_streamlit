@@ -202,12 +202,22 @@ with col2:
         df_merged = pd.merge(df_mes, df_meta_mes, on="ANO_MES", how="outer").fillna(0)
         df_merged["PCT"] = df_merged["TOTAL"] / df_merged["VALOR_META"]
 
-        fig1 = px.bar(df_merged, x="ANO_MES", y=["VALOR_META", "TOTAL"],
-                      title="Faturamento vs Meta por Mês", barmode="group",
-                      text_auto=True, color_discrete_sequence=["#A4B494", "#FE9C37"])
+        # Criação do gráfico sem text_auto
+        fig1 = px.bar(
+            df_merged, x="ANO_MES", y=["VALOR_META", "TOTAL"],
+            title="Faturamento vs Meta por Mês", barmode="group",
+            color_discrete_sequence=["#A4B494", "#FE9C37"]
+        )
 
-        fig1.update_traces(textfont_size=14)
+        # Adicionando os textos manualmente nas barras
+        fig1.update_traces(
+            texttemplate="R$ %{y:,.0f}",
+            textposition="inside",
+            textangle=-90,
+            textfont_size=14
+        )
 
+        # Linha de % realizado
         fig1.add_scatter(
             x=df_merged["ANO_MES"],
             y=df_merged["PCT"],
@@ -219,6 +229,7 @@ with col2:
             yaxis="y2"
         )
 
+        # Atualizando layout
         fig1.update_layout(
             yaxis=dict(
                 title="R$",
@@ -237,7 +248,8 @@ with col2:
                 range=[0, 1.5],
                 showticklabels=False,
                 showline=False,
-                zeroline=False
+                zeroline=False,
+                showgrid=False
             ),
             xaxis=dict(
                 type='category',
