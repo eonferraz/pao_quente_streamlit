@@ -179,27 +179,39 @@ col1, col2, col3 = st.columns([1, 2.3, 2])
 
 # CARDS
 #=====================================================================================================================================================================
+col1, col2, col3 = st.columns([1, 2.3, 2])
+
 with col1:
     fat_total = df_filt["TOTAL"].sum()
     qtd_vendas = df_filt["COD_VENDA"].nunique()
     ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
     meta_total = metas_filt["VALOR_META"].sum()
+    progresso = (fat_total / meta_total) * 100 if meta_total > 0 else 0
 
     def metric_card(titulo, valor):
         st.markdown(
             f"""
-            <div style="border: 1px solid #DDD; border-radius: 10px; padding: 10px; margin-bottom: 10px;">
-                <div style="font-size: 12px; color: gray;">{titulo}</div>
+            <div style="border: 1px solid #DDD; border-radius: 10px; padding: 10px; margin-bottom: 10px; text-align: center;">
+                <div style="font-size: 13px; color: gray;">{titulo}</div>
                 <div style="font-size: 20px; font-weight: bold;">{valor}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    metric_card("💰 Faturamento Total", f"R$ {fat_total:,.2f}".replace(",", "."))
-    metric_card("🎯 Meta de Faturamento", f"R$ {meta_total:,.2f}".replace(",", "."))
-    metric_card("📊 Qtde de Vendas", f"{qtd_vendas}")
-    metric_card("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
+    # Formatação dos números com ponto para milhar e vírgula para decimal
+    def format_brl(value):
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    def format_percent(value):
+        return f"{value:,.2f}%".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    # Cards
+    metric_card("💰 Faturamento Total", format_brl(fat_total))
+    metric_card("🎯 Meta de Faturamento", format_brl(meta_total))
+    metric_card("📈 Progresso da Meta", format_percent(progresso))
+    metric_card("📊 Qtde de Vendas", f"{qtd_vendas:,}".replace(",", "."))
+    metric_card("💳 Ticket Médio", format_brl(ticket))
 #=====================================================================================================================================================================
 
 with col2:
