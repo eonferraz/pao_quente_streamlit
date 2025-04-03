@@ -106,7 +106,7 @@ with st.container():
         <div style="display: flex; align-items: center; justify-content: center;">
             <img src="logo.png" style="height: 50px; margin-right: 12px;">
             <span style="font-size: 26px; font-weight: bold; color: #862E3A;">
-                📊 Dashboard Comercial
+                Dashboard Comercial - Pão Quente
             </span>
         </div>
     """, unsafe_allow_html=True)
