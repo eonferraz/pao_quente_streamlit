@@ -348,7 +348,7 @@ with col3b:
 
 st.markdown("---")
 
-col4, col5 = st.columns(3)  # ← Essa linha deve vir ANTES de usar col4 e col5
+col4, col5 = st.columns(4)  # ← Essa linha deve vir ANTES de usar col4 e col5
 
 with col4:
     with st.container(border=True):
