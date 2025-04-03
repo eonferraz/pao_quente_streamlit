@@ -50,9 +50,7 @@ df["DIA"] = df["DATA"].dt.day
 
 metas.columns = metas.columns.str.strip().str.upper()
 
-# ====================
-# CSS para cabeçalho fixo e layout
-# ====================
+# CSS atualizado para cabeçalho com alinhamento correto
 st.markdown("""
     <style>
         .fixed-header {
@@ -60,46 +58,62 @@ st.markdown("""
             top: 0;
             background-color: white;
             z-index: 999;
-            padding: 5px 10px 5px 10px;
+            padding: 10px 20px 5px 20px;
             border-bottom: 1px solid #ccc;
             box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
         }
 
-        .title {
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-            color: #862E3A;
-            padding-top: 10px;
-        }
-
-        .logo-container {
+        .header-flex {
             display: flex;
             align-items: center;
-            height: 100%;
+            justify-content: space-between;
         }
 
         .logo {
             height: 50px;
         }
 
+        .title {
+            font-size: 26px;
+            font-weight: bold;
+            color: #862E3A;
+            margin: 0 auto;
+        }
+
         .filters {
             display: flex;
-            justify-content: flex-end;
-            gap: 20px;
-            padding-top: 5px;
+            gap: 15px;
         }
 
-        .filters .stMultiSelect {
-            min-width: 180px;
-        }
-
-        /* Remove espaço vertical entre header e conteúdo abaixo */
         .block-container {
             padding-top: 0rem;
         }
     </style>
 """, unsafe_allow_html=True)
+
+# HTML + Streamlit para o cabeçalho alinhado corretamente
+with st.container():
+    st.markdown("<div class='fixed-header'>", unsafe_allow_html=True)
+    st.markdown("<div class='header-flex'>", unsafe_allow_html=True)
+
+    # Logo
+    st.image("logo.png", width=90)
+
+    # Título
+    st.markdown("<div class='title'>📊 Dashboard Comercial</div>", unsafe_allow_html=True)
+
+    # Filtros
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        todas_uns = sorted(df["UN"].dropna().unique())
+        un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="un_header")
+
+    with col2:
+        todos_meses = sorted(df["ANO_MES"].unique())
+        meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="meses_header")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ====================
 # HEADER COM LOGO, TÍTULO E FILTROS
