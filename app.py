@@ -17,6 +17,39 @@ import scipy
 # ====================
 st.set_page_config(page_title="Pão Quente", layout="wide")
 
+
+# ====================
+# CONEXÃO COM BANCO
+# ====================
+@st.cache_data(ttl=600)
+def carregar_dados():
+    conn = pyodbc.connect(
+        'DRIVER={ODBC Driver 17 for SQL Server};'
+        'SERVER=sx-global.database.windows.net;'
+        'DATABASE=sx_comercial;'
+        'UID=paulo.ferraz;'
+        'PWD=Gs!^42j$G0f0^EI#ZjRv'
+    )
+    df_vendas = pd.read_sql("SELECT * FROM PQ_VENDAS", conn)
+    df_metas = pd.read_sql("SELECT * FROM PQ_METAS", conn)
+    conn.close()
+    return df_vendas, df_metas
+
+
+# ====================
+# CARGA E PREPARO
+# ====================
+with st.spinner("🔄 Carregando dados..."):
+    df, metas = carregar_dados()
+
+df.columns = df.columns.str.strip().str.upper()
+df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
+df = df.dropna(subset=["DATA"])
+df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
+df["DIA"] = df["DATA"].dt.day
+
+metas.columns = metas.columns.str.strip().str.upper()
+
 # ====================
 # CSS para fixar cabeçalho
 # ====================
@@ -80,49 +113,6 @@ with st.container():
 # ====================
 # APLICA FILTROS
 # ====================
-df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
-metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO-MES"].isin(meses_selecionados))]
-
-# ====================
-# CONEXÃO COM BANCO
-# ====================
-@st.cache_data(ttl=600)
-def carregar_dados():
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=sx-global.database.windows.net;'
-        'DATABASE=sx_comercial;'
-        'UID=paulo.ferraz;'
-        'PWD=Gs!^42j$G0f0^EI#ZjRv'
-    )
-    df_vendas = pd.read_sql("SELECT * FROM PQ_VENDAS", conn)
-    df_metas = pd.read_sql("SELECT * FROM PQ_METAS", conn)
-    conn.close()
-    return df_vendas, df_metas
-
-# ====================
-# CARGA E PREPARO
-# ====================
-with st.spinner("🔄 Carregando dados..."):
-    df, metas = carregar_dados()
-
-df.columns = df.columns.str.strip().str.upper()
-df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
-df = df.dropna(subset=["DATA"])
-df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
-df["DIA"] = df["DATA"].dt.day
-
-metas.columns = metas.columns.str.strip().str.upper()
-
-# ====================
-# FILTROS
-# ====================
-st.sidebar.header("🔎 Filtros")
-todas_uns = sorted(df["UN"].dropna().unique())
-un_selecionadas = st.sidebar.multiselect("Unidades:", todas_uns, default=todas_uns)
-todos_meses = sorted(df["ANO_MES"].unique())
-meses_selecionados = st.sidebar.multiselect("Ano/Mês:", todos_meses, default=todos_meses)
-
 df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
 metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO-MES"].isin(meses_selecionados))]
 
