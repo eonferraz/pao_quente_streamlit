@@ -136,7 +136,6 @@ metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO-MES"].isi
 # ====================
 # EDIÇÃO DE METAS
 # ====================
-st.markdown("---")
 with st.container(border=True):
     if st.button("✏️ Editar Metas de Faturamento"):
         st.session_state['editar_metas'] = True
@@ -231,29 +230,35 @@ with col1:
     metric_card("💳 Ticket Médio", format_brl(ticket))
 #=====================================================================================================================================================================
 
+
+
+# FATURAMENTO MENSAL
+#=====================================================================================================================================================================
 with col2:
     with st.container(border=True):
+        # Preparação dos dados
         df_mes = df_filt.groupby("ANO_MES")["TOTAL"].sum().reset_index()
         df_meta_mes = metas_filt.groupby("ANO-MES")["VALOR_META"].sum().reset_index()
         df_meta_mes.rename(columns={"ANO-MES": "ANO_MES"}, inplace=True)
+
         df_merged = pd.merge(df_mes, df_meta_mes, on="ANO_MES", how="outer").fillna(0)
         df_merged["PCT"] = df_merged["TOTAL"] / df_merged["VALOR_META"]
 
+        # Gráfico de barras
         fig1 = px.bar(
             df_merged, x="ANO_MES", y=["VALOR_META", "TOTAL"],
-            title="Faturamento vs Meta por Mês", barmode="group",
+            title="📊 Faturamento x Meta + % Realizado por Mês",
+            barmode="group",
             color_discrete_sequence=["#A4B494", "#FE9C37"]
         )
 
         fig1.update_traces(
             texttemplate="R$ %{y:,.0f}",
-            textposition="inside",
-            textangle=-90,
-            textfont_size=16,
-            insidetextanchor="start"
-        )    
+            textposition="outside",
+            textfont_size=14
+        )
 
-        # Linha % realizado (sem texto, faremos manualmente)
+        # Linha de % Realizado
         fig1.add_scatter(
             x=df_merged["ANO_MES"],
             y=df_merged["PCT"],
@@ -264,19 +269,19 @@ with col2:
             marker=dict(size=8)
         )
 
-        # Adicionando % como annotations (fundo vermelho, texto branco)
+        # Anotações com fundo colorido baseado no desempenho
         for i, row in df_merged.iterrows():
+            cor_fundo = "#A4B494" if row["PCT"] >= 1 else "#862E3A"
             fig1.add_annotation(
                 x=row["ANO_MES"],
                 y=row["PCT"],
                 text=f"{row['PCT']:.0%}",
                 showarrow=False,
                 font=dict(color="white", size=12),
-                align="center",
-                bgcolor="#862E3A",
+                bgcolor=cor_fundo,
                 borderpad=4,
-                yanchor="bottom",  # ancora na base do texto
-                yshift=12           # empurra o texto para cima da linha
+                yanchor="bottom",
+                yshift=12
             )
 
         # Layout geral
@@ -285,10 +290,9 @@ with col2:
                 title="R$",
                 tickprefix="R$ ",
                 tickformat=",.0f",
-                showticklabels=False,
-                showline=False,
-                zeroline=False,
-                showgrid=False
+                showticklabels=True,
+                showgrid=True,
+                gridcolor='lightgray'
             ),
             yaxis2=dict(
                 overlaying="y",
@@ -296,15 +300,12 @@ with col2:
                 tickformat=".0%",
                 title="%",
                 range=[0, 1.5],
-                showticklabels=False,
-                showline=False,
-                zeroline=False,
+                showticklabels=True,
                 showgrid=False
             ),
             xaxis=dict(
                 type='category',
-                tickangle=-45,
-                showgrid=False
+                tickangle=-45
             ),
             legend=dict(
                 orientation="h",
@@ -319,10 +320,16 @@ with col2:
 
         st.plotly_chart(fig1, use_container_width=True)
 
+#=====================================================================================================================================================================
+
+
 st.markdown("---")
+
 
 col3a, col3b = st.columns(2)  # Desempacota as colunas corretamente
 
+
+#=====================================================================================================================================================================
 with col3a:
     with st.container(border=True):
         df_un = df_filt.groupby("UN")["TOTAL"].sum().reset_index().sort_values("TOTAL")
@@ -344,7 +351,7 @@ with col3b:
         )
         fig3.update_traces(textposition="inside", textinfo="percent+label")
         st.plotly_chart(fig3, use_container_width=True)
-
+#=====================================================================================================================================================================
 
 st.markdown("---")
 
