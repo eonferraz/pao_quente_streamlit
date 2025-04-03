@@ -51,7 +51,7 @@ df["DIA"] = df["DATA"].dt.day
 metas.columns = metas.columns.str.strip().str.upper()
 
 # ====================
-# CSS para fixar cabeçalho
+# CSS para cabeçalho fixo e layout
 # ====================
 st.markdown("""
     <style>
@@ -60,58 +60,81 @@ st.markdown("""
             top: 0;
             background-color: white;
             z-index: 999;
-            padding: 15px 10px;
+            padding: 5px 10px 5px 10px;
             border-bottom: 1px solid #ccc;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
         }
-        .header-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+
         .title {
-            flex-grow: 1;
             text-align: center;
             font-size: 28px;
             font-weight: bold;
             color: #862E3A;
+            padding-top: 10px;
         }
-        .filters {
+
+        .logo-container {
             display: flex;
-            gap: 15px;
+            align-items: center;
+            height: 100%;
         }
-        .stSelectbox, .stMultiSelect {
-            width: 200px !important;
-        }
+
         .logo {
             height: 50px;
+        }
+
+        .filters {
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            padding-top: 5px;
+        }
+
+        .filters .stMultiSelect {
+            min-width: 180px;
+        }
+
+        /* Remove espaço vertical entre header e conteúdo abaixo */
+        .block-container {
+            padding-top: 0rem;
         }
     </style>
 """, unsafe_allow_html=True)
 
 # ====================
-# HEADER com logo, título e filtros
+# HEADER COM LOGO, TÍTULO E FILTROS
 # ====================
 with st.container():
     st.markdown("<div class='fixed-header'>", unsafe_allow_html=True)
-    col_logo, col_titulo, col_filtros = st.columns([1, 2, 3])
 
+    col_logo, col_titulo, col_filtros = st.columns([1, 3, 3])
+
+    # Logo
     with col_logo:
-        st.image("logo.png", width=100)  # Substitua pelo caminho correto
+        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
+        st.image("logo.png", width=90)  # 🔁 Substitua com o caminho correto
+        st.markdown("</div>", unsafe_allow_html=True)
 
+    # Título
     with col_titulo:
         st.markdown("<div class='title'>📊 Dashboard Comercial</div>", unsafe_allow_html=True)
 
+    # Filtros (divididos em 2 colunas dentro da última coluna)
     with col_filtros:
-        todas_uns = sorted(df["UN"].dropna().unique())
-        un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="un_header")
+        col1, col2 = st.columns(2)
 
-        todos_meses = sorted(df["ANO_MES"].unique())
-        meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="meses_header")
+        with col1:
+            todas_uns = sorted(df["UN"].dropna().unique())
+            un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="un_header")
+
+        with col2:
+            todos_meses = sorted(df["ANO_MES"].unique())
+            meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="meses_header")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ====================
-# APLICA FILTROS
+# APLICAÇÃO DOS FILTROS
 # ====================
 df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
 metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO-MES"].isin(meses_selecionados))]
