@@ -102,7 +102,14 @@ with st.container():
     st.image("logo.png", width=90)
 
     # Título
-    st.markdown("<div class='title'>📊 Dashboard Comercial</div>", unsafe_allow_html=True)
+    st.markdown("""
+        <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="logo.png" style="height: 50px; margin-right: 12px;">
+            <span style="font-size: 26px; font-weight: bold; color: #862E3A;">
+                📊 Dashboard Comercial
+            </span>
+        </div>
+    """, unsafe_allow_html=True)
 
     # Filtros (divididos em 2 colunas lado a lado)
     col1, col2 = st.columns(2)
