@@ -91,7 +91,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# HTML + Streamlit para o cabeçalho alinhado corretamente
+# ====================
+# HEADER ÚNICO COM LOGO, TÍTULO E FILTROS
+# ====================
 with st.container():
     st.markdown("<div class='fixed-header'>", unsafe_allow_html=True)
     st.markdown("<div class='header-flex'>", unsafe_allow_html=True)
@@ -102,49 +104,18 @@ with st.container():
     # Título
     st.markdown("<div class='title'>📊 Dashboard Comercial</div>", unsafe_allow_html=True)
 
-    # Filtros
-    col1, col2 = st.columns([1, 1])
+    # Filtros (divididos em 2 colunas lado a lado)
+    col1, col2 = st.columns(2)
+
     with col1:
         todas_uns = sorted(df["UN"].dropna().unique())
-        un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="un_header")
+        un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="filtros_un")
 
     with col2:
         todos_meses = sorted(df["ANO_MES"].unique())
-        meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="meses_header")
+        meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="filtros_mes")
 
     st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# ====================
-# HEADER COM LOGO, TÍTULO E FILTROS
-# ====================
-with st.container():
-    st.markdown("<div class='fixed-header'>", unsafe_allow_html=True)
-
-    col_logo, col_titulo, col_filtros = st.columns([1, 3, 3])
-
-    # Logo
-    with col_logo:
-        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
-        st.image("logo.png", width=90)  # 🔁 Substitua com o caminho correto
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Título
-    with col_titulo:
-        st.markdown("<div class='title'>📊 Dashboard Comercial</div>", unsafe_allow_html=True)
-
-    # Filtros (divididos em 2 colunas dentro da última coluna)
-    with col_filtros:
-        col1, col2 = st.columns(2)
-
-        with col1:
-            todas_uns = sorted(df["UN"].dropna().unique())
-            un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="un_header")
-
-        with col2:
-            todos_meses = sorted(df["ANO_MES"].unique())
-            meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="meses_header")
-
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ====================
