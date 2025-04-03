@@ -341,31 +341,85 @@ with col2:
 st.markdown("---")
 
 
-col3a, col3b = st.columns(2)  # Desempacota as colunas corretamente
+col3a, col3c, col3b = st.columns(3)  # Desempacota as colunas corretamente
 
 
 #=====================================================================================================================================================================
+# === Base para os 3 gráficos
+hoje = pd.Timestamp.today()
+ano_mes_atual = hoje.to_period("M").strftime('%Y-%m')
+dia_hoje = hoje.day
+dias_no_mes = calendar.monthrange(hoje.year, hoje.month)[1]
+
+# === Dados do mês atual
+df_atual = df[df["ANO_MES"] == ano_mes_atual]
+df_meta_atual = metas[metas["ANO_MES"] == ano_mes_atual]
+
+# === Agrupamento por UN (vendas e metas do mês atual)
+df_fat_un = df_atual.groupby("UN")["TOTAL"].sum().reset_index()
+df_meta_un = df_meta_atual.groupby("LOJA")["VALOR_META"].sum().reset_index()
+df_meta_un.rename(columns={"LOJA": "UN"}, inplace=True)
+
+# === Merge de Faturamento + Meta
+df_merge = pd.merge(df_meta_un, df_fat_un, on="UN", how="left").fillna(0)
+
+# === Faturamento projetado
+df_merge["MEDIA_DIARIA"] = df_merge["TOTAL"] / dia_hoje
+df_merge["FAT_PROJETADO"] = df_merge["MEDIA_DIARIA"] * dias_no_mes
+
+# === Para gráfico de barras acumuladas (Faturado + Falta)
+df_merge["FALTA_META"] = df_merge["VALOR_META"] - df_merge["TOTAL"]
+df_merge["FALTA_META"] = df_merge["FALTA_META"].apply(lambda x: x if x > 0 else 0)
+
+# ========== GRÁFICO 1: Barras acumuladas (Faturado + Falta)
 with col3a:
     with st.container(border=True):
-        df_un = df_filt.groupby("UN")["TOTAL"].sum().reset_index().sort_values("TOTAL")
-
-        fig2 = px.bar(
-            df_un, x="TOTAL", y="UN", orientation='h',
-            text_auto=True, title="Faturamento por UN",
-            color_discrete_sequence=["#A4B494"]
+        fig_fat = px.bar(
+            df_merge,
+            x=["TOTAL", "FALTA_META"],
+            y="UN",
+            orientation='h',
+            title="📊 Faturamento Atual vs Meta por UN",
+            color_discrete_sequence=["#FE9C37", "#A4B494"]
         )
-        fig2.update_layout(xaxis_tickprefix="R$ ", xaxis_tickformat=",.2f")
-        st.plotly_chart(fig2, use_container_width=True)
+        fig_fat.update_layout(
+            barmode="stack",
+            xaxis_tickprefix="R$ ",
+            xaxis_tickformat=",.2f"
+        )
+        st.plotly_chart(fig_fat, use_container_width=True)
 
+# ========== GRÁFICO 2: Faturamento Projetado vs Meta
+with col3c:
+    with st.container(border=True):
+        fig_proj = px.bar(
+            df_merge,
+            x="UN",
+            y=["VALOR_META", "FAT_PROJETADO"],
+            title="📈 Faturamento Projetado vs Meta",
+            barmode="group",
+            color_discrete_sequence=["#A4B494", "#37392E"]
+        )
+        fig_proj.update_layout(
+            yaxis_tickprefix="R$ ",
+            yaxis_tickformat=",.0f"
+        )
+        st.plotly_chart(fig_proj, use_container_width=True)
+
+# ========== GRÁFICO 3: Pizza de participação
 with col3b:
     with st.container(border=True):
-        fig3 = px.pie(
-            df_un, names="UN", values="TOTAL", hole=0.5,
-            title="Distribuição % por UN",
+        fig_pie = px.pie(
+            df_merge,
+            names="UN",
+            values="TOTAL",
+            hole=0.5,
+            title="🧁 Distribuição % por UN",
             color_discrete_sequence=px.colors.sequential.RdBu
         )
-        fig3.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(fig3, use_container_width=True)
+        fig_pie.update_traces(textposition="inside", textinfo="percent+label")
+        st.plotly_chart(fig_pie, use_container_width=True)
+
 #=====================================================================================================================================================================
 
 st.markdown("---")
