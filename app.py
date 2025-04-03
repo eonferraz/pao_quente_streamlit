@@ -788,10 +788,7 @@ with st.container(border=True):
         var_list = []
         for idx in df_pivot_vendas.index:
             valor = df_pivot_vendas.loc[idx, col]
-            if pd.notna(valor):
-                texto = f"{int(valor):,}".replace(",", ".")
-            else:
-                texto = "-"
+            texto = f"{int(valor or 0):,}".replace(",", ".")
             variacao = None
             if i > 0:
                 valor_ant = df_pivot_vendas.loc[idx, colunas_vendas[i - 1]]
