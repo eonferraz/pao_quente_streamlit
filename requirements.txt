@@ -1,10 +1,8 @@
-streamlit
-pandas
+streamlit==1.32.2
+pandas==2.2.1
+plotly==5.19.0
 pyodbc
-plotly
 openpyxl
-datetime
 numpy
 networkx
 scipy
-calendar
