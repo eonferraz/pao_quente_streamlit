@@ -241,12 +241,15 @@ with col2:
         df_meta_mes = metas_filt.groupby("ANO-MES")["VALOR_META"].sum().reset_index()
         df_meta_mes.rename(columns={"ANO-MES": "ANO_MES"}, inplace=True)
 
-        df_merged = pd.merge(df_mes, df_meta_mes, on="ANO_MES", how="outer").fillna(0)
+        # Merge mantendo todos os meses da meta (mesmo se não houve venda)
+        df_merged = pd.merge(df_meta_mes, df_mes, on="ANO_MES", how="left").fillna(0)
         df_merged["PCT"] = df_merged["TOTAL"] / df_merged["VALOR_META"]
 
         # Gráfico de barras
         fig1 = px.bar(
-            df_merged, x="ANO_MES", y=["VALOR_META", "TOTAL"],
+            df_merged,
+            x="ANO_MES",
+            y=["VALOR_META", "TOTAL"],
             title="📊 Faturamento x Meta + % Realizado por Mês",
             barmode="group",
             color_discrete_sequence=["#A4B494", "#FE9C37"]
@@ -254,11 +257,13 @@ with col2:
 
         fig1.update_traces(
             texttemplate="R$ %{y:,.0f}",
-            textposition="outside",
-            textfont_size=14
+            textposition="inside",
+            textangle=-90,
+            textfont_size=14,
+            insidetextanchor="start"
         )
 
-        # Linha de % Realizado
+        # Linha de % realizado
         fig1.add_scatter(
             x=df_merged["ANO_MES"],
             y=df_merged["PCT"],
@@ -269,7 +274,7 @@ with col2:
             marker=dict(size=8)
         )
 
-        # Anotações com fundo colorido baseado no desempenho
+        # Destaque de % com cores dinâmicas
         for i, row in df_merged.iterrows():
             cor_fundo = "#A4B494" if row["PCT"] >= 1 else "#862E3A"
             fig1.add_annotation(
@@ -284,15 +289,14 @@ with col2:
                 yshift=12
             )
 
-        # Layout geral
+        # Layout final limpo
         fig1.update_layout(
             yaxis=dict(
                 title="R$",
                 tickprefix="R$ ",
                 tickformat=",.0f",
                 showticklabels=True,
-                showgrid=True,
-                gridcolor='lightgray'
+                showgrid=False
             ),
             yaxis2=dict(
                 overlaying="y",
@@ -319,6 +323,7 @@ with col2:
         )
 
         st.plotly_chart(fig1, use_container_width=True)
+
 
 #=====================================================================================================================================================================
 
