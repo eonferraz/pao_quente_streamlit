@@ -752,4 +752,3 @@ with st.container(border=True):
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-st.markdown(tabela_ticket, unsafe_allow_html=True)
