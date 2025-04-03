@@ -346,33 +346,34 @@ col3a, col3c, col3b = st.columns(3)  # Desempacota as colunas corretamente
 
 
 #=====================================================================================================================================================================
-# === Base para os 3 gráficos
-hoje = pd.Timestamp.today()
-ano_mes_atual = hoje.to_period("M").strftime('%Y-%m')
+# === BLOCOS DE GRÁFICOS COM CARDS INTERMEDIÁRIOS ===
+from datetime import datetime
+import calendar
+
+# Cálculos
+hoje = datetime.today()
 dia_hoje = hoje.day
 dias_no_mes = calendar.monthrange(hoje.year, hoje.month)[1]
 
-# === Dados do mês atual
-df_atual = df[df["ANO_MES"] == ano_mes_atual]
-df_meta_atual = metas[metas["ANO_MES"] == ano_mes_atual]
+df_merge = metas_filt.copy()
+df_merge = df_merge.rename(columns={"LOJA": "UN", "VALOR_META": "VALOR_META"})
 
-# === Agrupamento por UN (vendas e metas do mês atual)
-df_fat_un = df_atual.groupby("UN")["TOTAL"].sum().reset_index()
-df_meta_un = df_meta_atual.groupby("LOJA")["VALOR_META"].sum().reset_index()
-df_meta_un.rename(columns={"LOJA": "UN"}, inplace=True)
+df_fat = df_filt.groupby("UN")["TOTAL"].sum().reset_index()
+df_merge = pd.merge(df_merge, df_fat, on="UN", how="left").fillna(0)
 
-# === Merge de Faturamento + Meta
-df_merge = pd.merge(df_meta_un, df_fat_un, on="UN", how="left").fillna(0)
-
-# === Faturamento projetado
+# Faturamento acumulado e projetado
+df_merge["FALTA_META"] = df_merge["VALOR_META"] - df_merge["TOTAL"]
+df_merge["FALTA_META"] = df_merge["FALTA_META"].apply(lambda x: max(0, x))  # evita valores negativos
 df_merge["MEDIA_DIARIA"] = df_merge["TOTAL"] / dia_hoje
 df_merge["FAT_PROJETADO"] = df_merge["MEDIA_DIARIA"] * dias_no_mes
+df_merge["PCT_PROJETADO"] = df_merge["FAT_PROJETADO"] / df_merge["VALOR_META"]
 
-# === Para gráfico de barras acumuladas (Faturado + Falta)
-df_merge["FALTA_META"] = df_merge["VALOR_META"] - df_merge["TOTAL"]
-df_merge["FALTA_META"] = df_merge["FALTA_META"].apply(lambda x: x if x > 0 else 0)
+# ====================
+# COLUNAS
+# ====================
+col3a, col3c, col_cards, col3b = st.columns([1.2, 1.2, 1.1, 1.2])
 
-# ========== GRÁFICO 1: Barras acumuladas (Faturado + Falta)
+# GRÁFICO 1 - Faturamento Atual vs Meta
 with col3a:
     with st.container(border=True):
         fig_fat = px.bar(
@@ -381,116 +382,81 @@ with col3a:
             y="UN",
             orientation='h',
             title="📊 Faturamento Atual vs Meta por UN",
-            color_discrete_sequence=["#FE9C37", "#A4B494"]
+            color_discrete_sequence=["#FE9C37", "#A4B494"],
+            text_auto=True
         )
         fig_fat.update_layout(
             barmode="stack",
             xaxis_tickprefix="R$ ",
-            xaxis_tickformat=",.2f"
+            xaxis_tickformat=",.2f",
+            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5)
         )
         st.plotly_chart(fig_fat, use_container_width=True)
 
-# ========== GRÁFICO 2: Faturamento Projetado vs Meta
+# GRÁFICO 2 - Faturamento Projetado vs Meta
 with col3c:
     with st.container(border=True):
         fig_proj = px.bar(
             df_merge,
             x="UN",
             y=["VALOR_META", "FAT_PROJETADO"],
-            title="📈 Faturamento Projetado vs Meta",
+            title="🔮 Faturamento Projetado vs Meta",
             barmode="group",
-            color_discrete_sequence=["#A4B494", "#37392E"]
+            color_discrete_sequence=["#A4B494", "#37392E"],
+            text_auto=True
         )
+
+        # Adiciona % como anotação
+        for i, row in df_merge.iterrows():
+            fig_proj.add_annotation(
+                x=row["UN"],
+                y=row["FAT_PROJETADO"],
+                text=f"{row['PCT_PROJETADO']:.0%}",
+                showarrow=False,
+                yshift=10,
+                font=dict(size=12, color="green" if row["PCT_PROJETADO"] >= 1 else "red")
+            )
+
         fig_proj.update_layout(
             yaxis_tickprefix="R$ ",
-            yaxis_tickformat=",.0f"
+            yaxis_tickformat=",.0f",
+            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5)
         )
+
         st.plotly_chart(fig_proj, use_container_width=True)
 
-# ========== GRÁFICO 3: Pizza de participação
+# CARDS INTERMEDIÁRIOS
+with col_cards:
+    with st.container(border=True):
+        fat_realizado = df_merge["TOTAL"].sum()
+        meta = df_merge["VALOR_META"].sum()
+        fat_proj = df_merge["FAT_PROJETADO"].sum()
+        pct_proj = fat_proj / meta if meta > 0 else 0
+
+        st.markdown("<h5 style='color:#862E3A; text-align:center;'>📋 Indicadores Gerais</h5>", unsafe_allow_html=True)
+
+        st.metric(label="📈 Faturamento Realizado", value=f"R$ {fat_realizado:,.0f}".replace(",", "."))
+        st.metric(label="🎯 Meta de Faturamento", value=f"R$ {meta:,.0f}".replace(",", "."))
+        st.metric(label="🔮 Faturamento Projetado", value=f"R$ {fat_proj:,.0f}".replace(",", "."))
+        st.metric(
+            label="📊 Projeção vs Meta",
+            value=f"{pct_proj:.0%}",
+            delta="Acima da meta" if pct_proj >= 1 else "Abaixo da meta"
+        )
+
+# GRÁFICO 3 - Distribuição %
 with col3b:
     with st.container(border=True):
-        fig_pie = px.pie(
+        fig3 = px.pie(
             df_merge,
             names="UN",
             values="TOTAL",
             hole=0.5,
-            title="🧁 Distribuição % por UN",
+            title="🍩 Distribuição % por UN",
             color_discrete_sequence=px.colors.sequential.RdBu
         )
-        fig_pie.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(fig_pie, use_container_width=True)
-
-#=====================================================================================================================================================================
-
-st.markdown("---")
-
-col4, col5 = st.columns(2)  # ← Essa linha deve vir ANTES de usar col4 e col5
-
-with col4:
-    with st.container(border=True):
-        # Faturamento acumulado por dia
-        df_dia = df_filt.groupby("DATA")["TOTAL"].sum().reset_index()
-        df_dia["FAT_ACUM"] = df_dia["TOTAL"].cumsum()
-
-        if not metas_filt.empty:
-            meta_mes_total = metas_filt["VALOR_META"].sum()
-            dias_do_mes = df_dia["DATA"].dt.days_in_month.iloc[0]  # assume mesmo mês
-            meta_dia = meta_mes_total / dias_do_mes
-
-            df_dia["META_DIA"] = meta_dia
-            df_dia["META_ACUM"] = df_dia["META_DIA"].cumsum()
-            df_dia["PCT"] = df_dia["FAT_ACUM"] / df_dia["META_ACUM"]
-
-        # Gráfico principal
-        fig4 = px.line(df_dia, x="DATA", y="FAT_ACUM", title="Faturamento Acumulado no Mês",
-                       markers=True, color_discrete_sequence=["#862E3A"])
-
-        # Meta acumulada
-        if "META_ACUM" in df_dia.columns:
-            fig4.add_scatter(x=df_dia["DATA"], y=df_dia["META_ACUM"],
-                             mode="lines+markers", name="Meta Acumulada",
-                             line=dict(color="#A4B494", dash="dot"))
-
-            # Cor dinâmica da linha % realizado
-            cor_pct = "#A4B494" if df_dia["PCT"].iloc[-1] >= 1 else "#862E3A"
-
-            fig4.add_scatter(x=df_dia["DATA"], y=df_dia["PCT"],
-                             mode="lines+markers", name="% Realizado",
-                             line=dict(color=cor_pct, dash="dot"),
-                             yaxis="y2")
-
-        # Layout final
-        fig4.update_layout(
-            yaxis=dict(title="R$", tickprefix="R$ ", tickformat=",.0f"),
-            yaxis2=dict(overlaying="y", side="right", tickformat=".0%", title="%", range=[0, 1.5]),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
-        )
-        st.plotly_chart(fig4, use_container_width=True)
-
-
-
-with col5:
-    with st.container(border=True):
-        df_ticket = df_filt.groupby("DATA").agg({"TOTAL": "sum", "COD_VENDA": "nunique"}).reset_index()
-        df_ticket["TICKET"] = df_ticket["TOTAL"] / df_ticket["COD_VENDA"]
-        df_ticket["MM_TICKET"] = df_ticket["TICKET"].rolling(window=7).mean()
-
-        fig5 = px.line(df_ticket, x="DATA", y="TICKET", title="Evolução do Ticket Médio",
-                       markers=True, color_discrete_sequence=["#37392E"])
-
-        fig5.add_scatter(x=df_ticket["DATA"], y=df_ticket["MM_TICKET"],
-                         mode="lines", name="Média Móvel (7 dias)",
-                         line=dict(color="#FE9C37", dash="dot"))
-
-        fig5.update_layout(
-            yaxis_tickprefix="R$ ",
-            yaxis_tickformat=",.2f",
-            yaxis_range=[0, df_ticket["TICKET"].max() * 1.1],
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
-        )
-
-        st.plotly_chart(fig5, use_container_width=True)
+        fig3.update_traces(textposition="inside", textinfo="percent+label")
+        st.plotly_chart(fig3, use_container_width=True)
 
 st.markdown("---")
 
