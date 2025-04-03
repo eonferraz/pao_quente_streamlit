@@ -18,56 +18,70 @@ import scipy
 st.set_page_config(page_title="Pão Quente", layout="wide")
 
 # ====================
-# CSS FIXO PARA TOPO
+# CSS para fixar cabeçalho
 # ====================
 st.markdown("""
     <style>
-    .header-fixed {
-        position: sticky;
-        top: 0;
-        background-color: #2e2e2e;
-        z-index: 999;
-        padding: 10px 2rem 5px 2rem;
-        border-bottom: 2px solid #862E3A;
-        display: flex;
-        align-items: center;
-    }
-    .header-fixed img {
-        width: 80px;
-        margin-right: 20px;
-    }
-    .header-title h1 {
-        color: #862E3A;
-        margin: 0;
-        font-size: 32px;
-    }
-    .header-title h4 {
-        color: #A4B494;
-        margin: 0;
-        font-size: 18px;
-    }
+        .fixed-header {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 999;
+            padding: 15px 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .title {
+            flex-grow: 1;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #862E3A;
+        }
+        .filters {
+            display: flex;
+            gap: 15px;
+        }
+        .stSelectbox, .stMultiSelect {
+            width: 200px !important;
+        }
+        .logo {
+            height: 50px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
 # ====================
-# TOPO FIXO COM LOGO E TÍTULO
+# HEADER com logo, título e filtros
 # ====================
-def get_base64_image(img_path):
-    with open(img_path, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+with st.container():
+    st.markdown("<div class='fixed-header'>", unsafe_allow_html=True)
+    col_logo, col_titulo, col_filtros = st.columns([1, 2, 3])
 
-logo_base64 = get_base64_image("logo.png")
+    with col_logo:
+        st.image("logo.png", width=100)  # Substitua pelo caminho correto
 
-st.markdown(f"""
-<div class="header-fixed">
-  <img src="data:image/png;base64,{logo_base64}" alt="Logo">
-  <div class="header-title">
-    <h1>Dashboard de Vendas</h1>
-    <h4>Padaria Pão Quente</h4>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    with col_titulo:
+        st.markdown("<div class='title'>📊 Dashboard Comercial</div>", unsafe_allow_html=True)
+
+    with col_filtros:
+        todas_uns = sorted(df["UN"].dropna().unique())
+        un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="un_header")
+
+        todos_meses = sorted(df["ANO_MES"].unique())
+        meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="meses_header")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ====================
+# APLICA FILTROS
+# ====================
+df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
+metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO-MES"].isin(meses_selecionados))]
 
 # ====================
 # CONEXÃO COM BANCO
