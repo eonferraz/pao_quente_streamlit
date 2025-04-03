@@ -788,18 +788,26 @@ with st.container(border=True):
         var_list = []
         for idx in df_pivot_vendas.index:
             valor = df_pivot_vendas.loc[idx, col]
-            texto = f"{int(valor or 0):,}".replace(",", ".")
+    
+            # Proteção contra NaN
+            if pd.notna(valor):
+                texto = f"{int(valor):,}".replace(",", ".")
+            else:
+                texto = "-"
+    
             variacao = None
             if i > 0:
                 valor_ant = df_pivot_vendas.loc[idx, colunas_vendas[i - 1]]
-                if valor_ant > 0:
+                if pd.notna(valor) and pd.notna(valor_ant) and valor_ant > 0:
                     variacao = (valor - valor_ant) / valor_ant
                     cor = "green" if variacao > 0 else "red"
                     texto += f"<br><span style='color:{cor}; font-size: 14px'>{variacao:+.2%}</span>"
+    
             col_fmt.append(texto)
             var_list.append(variacao)
         df_formatada_vendas[col] = col_fmt
         variacoes_pct_vendas[col] = var_list
+
 
     # === Tabela HTML
     tabela_vendas = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
