@@ -300,6 +300,7 @@ with col2:
 
         # Layout final com fundo transparente
         fig1.update_layout(
+            template=pio.templates["plotly"],
             yaxis=dict(
                 title="R$",
                 tickprefix="R$ ",
@@ -327,8 +328,8 @@ with col2:
                 xanchor="center",
                 x=0.5
             ),
-            plot_bgcolor='transparent',
-            paper_bgcolor='transparent'
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)"
         )
 
         st.plotly_chart(fig1, use_container_width=True)
