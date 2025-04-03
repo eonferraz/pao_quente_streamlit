@@ -177,24 +177,30 @@ if st.session_state.get('editar_metas', False):
 col1, col2, col3 = st.columns([1, 2.3, 2])
 
 
-
+# CARDS
+#=====================================================================================================================================================================
 with col1:
     fat_total = df_filt["TOTAL"].sum()
     qtd_vendas = df_filt["COD_VENDA"].nunique()
     ticket = fat_total / qtd_vendas if qtd_vendas > 0 else 0
     meta_total = metas_filt["VALOR_META"].sum()
 
-    with st.container(border=True):
-        st.metric("💰 Faturamento Total", f"R$ {fat_total:,.2f}".replace(",", "."))
+    def metric_card(titulo, valor):
+        st.markdown(
+            f"""
+            <div style="border: 1px solid #DDD; border-radius: 10px; padding: 10px; margin-bottom: 10px;">
+                <div style="font-size: 12px; color: gray;">{titulo}</div>
+                <div style="font-size: 20px; font-weight: bold;">{valor}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-    with st.container(border=True):
-        st.metric("🎯 Meta de Faturamento", f"R$ {meta_total:,.2f}".replace(",", "."))
-
-    with st.container(border=True):
-        st.metric("📊 Qtde de Vendas", qtd_vendas)
-
-    with st.container(border=True):
-        st.metric("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
+    metric_card("💰 Faturamento Total", f"R$ {fat_total:,.2f}".replace(",", "."))
+    metric_card("🎯 Meta de Faturamento", f"R$ {meta_total:,.2f}".replace(",", "."))
+    metric_card("📊 Qtde de Vendas", f"{qtd_vendas}")
+    metric_card("💳 Ticket Médio", f"R$ {ticket:,.2f}".replace(",", "."))
+#=====================================================================================================================================================================
 
 with col2:
     with st.container(border=True):
