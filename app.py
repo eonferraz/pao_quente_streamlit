@@ -280,8 +280,7 @@ with col2:
             y0=1, y1=1,
             xref='x',
             yref='y2',
-            line=dict(color="#C0392B", width=1.5, dash="dot"),
-            name="Meta 100%"
+            line=dict(color="#C0392B", width=1.5, dash="dot")
         )
 
         # Destaque de % com cores vivas e acima da linha
