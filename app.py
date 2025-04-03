@@ -284,7 +284,7 @@ with col2:
             name="Meta 100%"
         )
 
-        # Destaque de % com cores mais vivas e acima da linha
+        # Destaque de % com cores vivas e acima da linha
         for i, row in df_merged.iterrows():
             cor_fundo = "#3CB371" if row["PCT"] >= 1 else "#C0392B"
             fig1.add_annotation(
@@ -295,11 +295,11 @@ with col2:
                 font=dict(color="white", size=12),
                 bgcolor=cor_fundo,
                 borderpad=4,
-                yanchor="top",   # agora acima da linha
+                yanchor="top",
                 yshift=-10
             )
 
-        # Layout final
+        # Layout final com fundo transparente
         fig1.update_layout(
             yaxis=dict(
                 title="R$",
@@ -328,14 +328,11 @@ with col2:
                 xanchor="center",
                 x=0.5
             ),
-            plot_bgcolor='white',
-            paper_bgcolor='white'
+            plot_bgcolor='transparent',
+            paper_bgcolor='transparent'
         )
 
         st.plotly_chart(fig1, use_container_width=True)
-
-
-
 #=====================================================================================================================================================================
 
 
