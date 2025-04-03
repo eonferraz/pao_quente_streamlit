@@ -12,6 +12,8 @@ from plotly import graph_objects as go
 import networkx as nx
 import scipy
 import calendar 
+import plotly.io as pio
+
 
 # ====================
 # CONFIG INICIAL
