@@ -17,7 +17,6 @@ import scipy
 # ====================
 st.set_page_config(page_title="Pão Quente", layout="wide")
 
-
 # ====================
 # CONEXÃO COM BANCO
 # ====================
@@ -35,22 +34,28 @@ def carregar_dados():
     conn.close()
     return df_vendas, df_metas
 
-
 # ====================
 # CARGA E PREPARO
 # ====================
 with st.spinner("🔄 Carregando dados..."):
     df, metas = carregar_dados()
 
+# Limpeza e padronização
 df.columns = df.columns.str.strip().str.upper()
+metas.columns = metas.columns.str.strip().str.upper()
+
+# Datas e colunas derivadas
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
 df = df.dropna(subset=["DATA"])
 df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
 df["DIA"] = df["DATA"].dt.day
 
-metas.columns = metas.columns.str.strip().str.upper()
+# Cria ANO_MES na tabela de metas
+metas["ANO_MES"] = pd.to_datetime(metas["ANO-MES"]).dt.to_period("M").astype(str)
 
-# CSS atualizado para cabeçalho com alinhamento correto
+# ====================
+# CSS para o cabeçalho
+# ====================
 st.markdown("""
     <style>
         .fixed-header {
@@ -62,29 +67,24 @@ st.markdown("""
             border-bottom: 1px solid #ccc;
             box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
         }
-
         .header-flex {
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-
         .logo {
             height: 50px;
         }
-
         .title {
             font-size: 26px;
             font-weight: bold;
             color: #862E3A;
             margin: 0 auto;
         }
-
         .filters {
             display: flex;
             gap: 15px;
         }
-
         .block-container {
             padding-top: 0rem;
         }
@@ -101,7 +101,7 @@ with st.container():
     # Logo
     st.image("logo.png", width=90)
 
-    # Título
+    # Título com logo embutido
     st.markdown("""
         <div style="display: flex; align-items: center; justify-content: center;">
             <img src="logo.png" style="height: 50px; margin-right: 12px;">
@@ -111,15 +111,15 @@ with st.container():
         </div>
     """, unsafe_allow_html=True)
 
-    # Filtros (divididos em 2 colunas lado a lado)
+    # Filtros com base em METAS (e não em vendas)
     col1, col2 = st.columns(2)
 
     with col1:
-        todas_uns = sorted(df["UN"].dropna().unique())
+        todas_uns = sorted(metas["LOJA"].dropna().unique())
         un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="filtros_un")
 
     with col2:
-        todos_meses = sorted(df["ANO_MES"].unique())
+        todos_meses = sorted(metas["ANO_MES"].dropna().unique())
         meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="filtros_mes")
 
     st.markdown("</div>", unsafe_allow_html=True)
@@ -129,7 +129,7 @@ with st.container():
 # APLICAÇÃO DOS FILTROS
 # ====================
 df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
-metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO-MES"].isin(meses_selecionados))]
+metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO_MES"].isin(meses_selecionados))]
 
 
 
