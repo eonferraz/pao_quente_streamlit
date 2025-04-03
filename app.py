@@ -802,21 +802,20 @@ with st.container(border=True):
             pct = variacoes_pct_ticket.loc[idx, col]
 
             # Cor de fundo com proteção
-            if pct is None or pd.isna(pct):
+            try:
+                if pd.isna(pct) or not isinstance(pct, (int, float)):
+                    raise ValueError("Valor inválido para pct")
+                if pct >= 0:
+                    intensidade = int(255 - min(pct, 1) * 155)
+                    fundo = f"rgb({intensidade}, 255, {intensidade})"
+                else:
+                    intensidade = int(255 - min(abs(pct), 1) * 155)
+                    fundo = f"rgb(255, {intensidade}, {intensidade})"
+            except:
                 fundo = "#f0f0f0"
-            else:
-                try:
-                    if pct >= 0:
-                        intensidade = int(255 - min(pct, 1) * 155)
-                        fundo = f"rgb({intensidade}, 255, {intensidade})"
-                    else:
-                        intensidade = int(255 - min(abs(pct), 1) * 155)
-                        fundo = f"rgb(255, {intensidade}, {intensidade})"
-                except:
-                    fundo = "#f0f0f0"
 
             tabela_ticket += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111;'>{celula}</td>"
         tabela_ticket += "</tr>"
     tabela_ticket += "</tbody></table>"
 
-    st.markdown(tabela_ticket, unsafe_allow_html=True)
+st.markdown(tabela_ticket, unsafe_allow_html=True)
