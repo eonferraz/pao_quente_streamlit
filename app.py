@@ -274,9 +274,21 @@ with col2:
             marker=dict(size=8)
         )
 
-        # Destaque de % com cores dinâmicas
+        # Linha fixa de referência em 100%
+        fig1.add_shape(
+            type="line",
+            x0=df_merged["ANO_MES"].min(),
+            x1=df_merged["ANO_MES"].max(),
+            y0=1, y1=1,
+            xref='x',
+            yref='y2',
+            line=dict(color="#C0392B", width=1.5, dash="dot"),
+            name="Meta 100%"
+        )
+
+        # Destaque de % com cores mais vivas e acima da linha
         for i, row in df_merged.iterrows():
-            cor_fundo = "#A4B494" if row["PCT"] >= 1 else "#862E3A"
+            cor_fundo = "#3CB371" if row["PCT"] >= 1 else "#C0392B"
             fig1.add_annotation(
                 x=row["ANO_MES"],
                 y=row["PCT"],
@@ -285,11 +297,11 @@ with col2:
                 font=dict(color="white", size=12),
                 bgcolor=cor_fundo,
                 borderpad=4,
-                yanchor="bottom",
-                yshift=12
+                yanchor="top",   # agora acima da linha
+                yshift=-10
             )
 
-        # Layout final limpo
+        # Layout final
         fig1.update_layout(
             yaxis=dict(
                 title="R$",
@@ -323,6 +335,7 @@ with col2:
         )
 
         st.plotly_chart(fig1, use_container_width=True)
+
 
 
 #=====================================================================================================================================================================
