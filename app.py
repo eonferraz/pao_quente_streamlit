@@ -321,25 +321,30 @@ with col2:
 
 st.markdown("---")
 
-col3 = st.columns(2)
-with col3:
+col3a, col3b = st.columns(2)  # Desempacota as colunas corretamente
+
+with col3a:
     with st.container(border=True):
         df_un = df_filt.groupby("UN")["TOTAL"].sum().reset_index().sort_values("TOTAL")
 
-        col3a, col3b = st.columns(2)
+        fig2 = px.bar(
+            df_un, x="TOTAL", y="UN", orientation='h',
+            text_auto=True, title="Faturamento por UN",
+            color_discrete_sequence=["#A4B494"]
+        )
+        fig2.update_layout(xaxis_tickprefix="R$ ", xaxis_tickformat=",.2f")
+        st.plotly_chart(fig2, use_container_width=True)
 
-        with col3a:
-            fig2 = px.bar(df_un, x="TOTAL", y="UN", orientation='h',
-                          text_auto=True, title="Faturamento por UN", color_discrete_sequence=["#A4B494"])
-            fig2.update_layout(xaxis_tickprefix="R$ ", xaxis_tickformat=",.2f")
-            st.plotly_chart(fig2, use_container_width=True)
+with col3b:
+    with st.container(border=True):
+        fig3 = px.pie(
+            df_un, names="UN", values="TOTAL", hole=0.5,
+            title="Distribuição % por UN",
+            color_discrete_sequence=px.colors.sequential.RdBu
+        )
+        fig3.update_traces(textposition="inside", textinfo="percent+label")
+        st.plotly_chart(fig3, use_container_width=True)
 
-        with col3b:
-            fig3 = px.pie(df_un, names="UN", values="TOTAL", hole=0.5,
-                          title="Distribuição % por UN",
-                          color_discrete_sequence=px.colors.sequential.RdBu)
-            fig3.update_traces(textposition="inside", textinfo="percent+label")
-            st.plotly_chart(fig3, use_container_width=True)
 
 st.markdown("---")
 
