@@ -750,6 +750,6 @@ with st.container(border=True):
         data=output.getvalue(),
         file_name="comparativo_dia_da_semana.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    
+    )
 
 st.markdown(tabela_ticket, unsafe_allow_html=True)
