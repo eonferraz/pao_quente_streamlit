@@ -204,9 +204,9 @@ with col1:
     def metric_card(titulo, valor):
         st.markdown(
             f"""
-            <div style="border: 1px solid #DDD; border-radius: 10px; padding: 10px; margin-bottom: 10px; text-align: center;">
+            <div style="border: 1px solid #DDD; border-radius: 11px; padding: 11px; margin-bottom: 11px; text-align: center;">
                 <div style="font-size: 13px; color: gray;">{titulo}</div>
-                <div style="font-size: 20px; font-weight: bold;">{valor}</div>
+                <div style="font-size: 22px; font-weight: bold;">{valor}</div>
             </div>
             """,
             unsafe_allow_html=True
