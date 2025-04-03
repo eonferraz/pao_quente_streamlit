@@ -373,41 +373,76 @@ df_merge["PCT_PROJETADO"] = df_merge["FAT_PROJETADO"] / df_merge["VALOR_META"]
 # ====================
 col3a, col3c, col_cards, col3b = st.columns([1.2, 1.2, 1.1, 1.2])
 
-# GRÁFICO 1 - Faturamento Atual vs Meta
-with col3a:
+from datetime import datetime
+import calendar
+
+# === FILTRO PARA MÊS ATUAL
+hoje = datetime.today()
+ano_mes_atual = hoje.strftime("%Y-%m")
+dia_hoje = hoje.day
+dias_no_mes = calendar.monthrange(hoje.year, hoje.month)[1]
+
+df_mes_atual = df_filt[df_filt["ANO_MES"] == ano_mes_atual].copy()
+metas_mes_atual = metas_filt[metas_filt["ANO-MES"] == ano_mes_atual].copy()
+
+# === PREPARAÇÃO DE DADOS AGRUPADOS POR UN
+df_un_fat = df_mes_atual.groupby("UN")["TOTAL"].sum().reset_index()
+df_merge = pd.merge(
+    metas_mes_atual.rename(columns={"LOJA": "UN"}),
+    df_un_fat,
+    on="UN",
+    how="left"
+).fillna(0)
+
+df_merge["FALTA_META"] = (df_merge["VALOR_META"] - df_merge["TOTAL"]).clip(lower=0)
+df_merge["MEDIA_DIARIA"] = df_merge["TOTAL"] / dia_hoje
+df_merge["FAT_PROJETADO"] = df_merge["MEDIA_DIARIA"] * dias_no_mes
+df_merge["PCT_PROJETADO"] = df_merge["FAT_PROJETADO"] / df_merge["VALOR_META"]
+
+# === CÁLCULOS PARA CARDS DO MÊS ATUAL
+fat_realizado = df_merge["TOTAL"].sum()
+meta = df_merge["VALOR_META"].sum()
+fat_proj = df_merge["FAT_PROJETADO"].sum()
+pct_proj = fat_proj / meta if meta > 0 else 0
+
+# === LAYOUT EM 4 COLUNAS
+col1, col2, col_card, col3 = st.columns([1.2, 1.2, 1.1, 1.2])
+
+# === GRÁFICO 1 - Faturamento Atual vs Meta (Stacked)
+with col1:
     with st.container(border=True):
         fig_fat = px.bar(
             df_merge,
-            x=["TOTAL", "FALTA_META"],
             y="UN",
+            x=["TOTAL", "FALTA_META"],
             orientation='h',
+            barmode="stack",
             title="📊 Faturamento Atual vs Meta por UN",
             color_discrete_sequence=["#FE9C37", "#A4B494"],
-            text_auto=True
+            text_auto=".2s"
         )
         fig_fat.update_layout(
-            barmode="stack",
             xaxis_tickprefix="R$ ",
-            xaxis_tickformat=",.2f",
-            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5)
+            xaxis_tickformat=",.0f",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
         )
         st.plotly_chart(fig_fat, use_container_width=True)
 
-# GRÁFICO 2 - Faturamento Projetado vs Meta
-with col3c:
+# === GRÁFICO 2 - Faturamento Projetado vs Meta
+with col2:
     with st.container(border=True):
         fig_proj = px.bar(
             df_merge,
             x="UN",
             y=["VALOR_META", "FAT_PROJETADO"],
-            title="🔮 Faturamento Projetado vs Meta",
             barmode="group",
+            title="🔮 Faturamento Projetado vs Meta",
             color_discrete_sequence=["#A4B494", "#37392E"],
-            text_auto=True
+            text_auto=".2s"
         )
 
         # Adiciona % como anotação
-        for i, row in df_merge.iterrows():
+        for _, row in df_merge.iterrows():
             fig_proj.add_annotation(
                 x=row["UN"],
                 y=row["FAT_PROJETADO"],
@@ -420,43 +455,33 @@ with col3c:
         fig_proj.update_layout(
             yaxis_tickprefix="R$ ",
             yaxis_tickformat=",.0f",
-            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5)
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
         )
-
         st.plotly_chart(fig_proj, use_container_width=True)
 
-# CARDS INTERMEDIÁRIOS
-with col_cards:
+# === CARDS CENTRAIS (apenas mês atual)
+with col_card:
     with st.container(border=True):
-        fat_realizado = df_merge["TOTAL"].sum()
-        meta = df_merge["VALOR_META"].sum()
-        fat_proj = df_merge["FAT_PROJETADO"].sum()
-        pct_proj = fat_proj / meta if meta > 0 else 0
-
         st.markdown("<h5 style='color:#862E3A; text-align:center;'>📋 Indicadores Gerais</h5>", unsafe_allow_html=True)
+        st.metric("📈 Faturamento Realizado", f"R$ {fat_realizado:,.0f}".replace(",", "."))
+        st.metric("🎯 Meta de Faturamento", f"R$ {meta:,.0f}".replace(",", "."))
+        st.metric("🔮 Faturamento Projetado", f"R$ {fat_proj:,.0f}".replace(",", "."))
+        st.metric("📊 Projeção vs Meta", f"{pct_proj:.0%}", delta="Acima da meta" if pct_proj >= 1 else "Abaixo da meta")
 
-        st.metric(label="📈 Faturamento Realizado", value=f"R$ {fat_realizado:,.0f}".replace(",", "."))
-        st.metric(label="🎯 Meta de Faturamento", value=f"R$ {meta:,.0f}".replace(",", "."))
-        st.metric(label="🔮 Faturamento Projetado", value=f"R$ {fat_proj:,.0f}".replace(",", "."))
-        st.metric(
-            label="📊 Projeção vs Meta",
-            value=f"{pct_proj:.0%}",
-            delta="Acima da meta" if pct_proj >= 1 else "Abaixo da meta"
-        )
-
-# GRÁFICO 3 - Distribuição %
-with col3b:
+# === GRÁFICO 3 - Distribuição % por UN (não precisa de filtro por mês)
+with col3:
     with st.container(border=True):
-        fig3 = px.pie(
+        fig_pie = px.pie(
             df_merge,
             names="UN",
             values="TOTAL",
-            hole=0.5,
             title="🍩 Distribuição % por UN",
+            hole=0.5,
             color_discrete_sequence=px.colors.sequential.RdBu
         )
-        fig3.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(fig3, use_container_width=True)
+        fig_pie.update_traces(textposition="inside", textinfo="percent+label")
+        st.plotly_chart(fig_pie, use_container_width=True)
+
 
 st.markdown("---")
 
