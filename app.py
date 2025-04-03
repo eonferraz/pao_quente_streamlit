@@ -103,27 +103,24 @@ with st.container():
 
     # Título com logo embutido
     st.markdown("""
-        <div style="display: flex; align-items: center; justify-content: center;">
-            <img src="logo.png" style="height: 50px; margin-right: 12px;">
+        <div style="display: flex; align-items: center; justify-content: center;">            
             <span style="font-size: 26px; font-weight: bold; color: #862E3A;">
                 Dashboard Comercial - Pão Quente
             </span>
         </div>
     """, unsafe_allow_html=True)
 
-    # Filtros com base em METAS (e não em vendas)
-    col1, col2 = st.columns(2)
-
-    with col1:
+    col_un, col_mes = st.columns([0.3, 0.7])  # ← 30% para unidades, 70% para Ano/Mês
+    
+    with col_un:
         todas_uns = sorted(metas["LOJA"].dropna().unique())
         un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="filtros_un")
-
-    with col2:
+    
+    with col_mes:
         todos_meses = sorted(metas["ANO_MES"].dropna().unique())
         meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="filtros_mes")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ====================
 # APLICAÇÃO DOS FILTROS
