@@ -681,18 +681,13 @@ with st.container(border=True):
             pct = variacoes_pct.loc[idx, col]
 
             # Cor de fundo com proteção
+            # Cor de fundo com cor fixa (sem degradê)
             if pct is None or pd.isna(pct):
                 fundo = "#f0f0f0"
+            elif pct >= 0:
+                fundo = "#CCFFCC"  # verde fixo
             else:
-                try:
-                    if pct >= 0:
-                        intensidade = int(255 - min(pct, 1) * 155)
-                        fundo = f"rgb({intensidade}, 255, {intensidade})"
-                    else:
-                        intensidade = int(255 - min(abs(pct), 1) * 155)
-                        fundo = f"rgb(255, {intensidade}, {intensidade})"
-                except:
-                    fundo = "#f0f0f0"
+                fundo = "#FFCCCC"  # vermelho fixo
 
             tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111;'>{celula}</td>"
         tabela_html += "</tr>"
