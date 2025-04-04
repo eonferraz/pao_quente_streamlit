@@ -145,7 +145,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ====================
-# HEADER ÚNICO COM LOGO, TÍTULO E FILTROS
+# HEADER ÚNICO COM LOGO E TÍTULO (sem filtros aqui)
 # ====================
 with st.container():
     st.markdown("<div class='fixed-header'>", unsafe_allow_html=True)
@@ -163,23 +163,22 @@ with st.container():
         </div>
     """, unsafe_allow_html=True)
 
-    col_un, col_mes = st.columns([0.3, 0.7])  # ← 30% para unidades, 70% para Ano/Mês
-    
-    with col_un:
-        todas_uns = sorted(metas["LOJA"].dropna().unique())
-        un_selecionadas = st.multiselect("Unidades:", todas_uns, default=todas_uns, key="filtros_un")
-    
-    with col_mes:
-        todos_meses = sorted(metas["ANO_MES"].dropna().unique())
-        meses_selecionados = st.multiselect("Ano/Mês:", todos_meses, default=todos_meses, key="filtros_mes")
-        st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ====================
-# APLICAÇÃO DOS FILTROS
+# APLICAÇÃO DOS FILTROS (vindos do sidebar)
 # ====================
-df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
-metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO_MES"].isin(meses_selecionados))]
+
+# Filtro de datas (já aplicado antes ao df)
+df_filt = df[df["UN"].isin(un_selecionadas)].copy()
+metas_filt = metas[metas["LOJA"].isin(un_selecionadas)].copy()
+
+# Geração automática dos meses presentes no df filtrado por data
+meses_selecionados = sorted(df_filt["ANO_MES"].unique())
+metas_filt = metas_filt[metas_filt["ANO_MES"].isin(meses_selecionados)]
+df_filt = df_filt[df_filt["ANO_MES"].isin(meses_selecionados)]
+
 
 # ====================
 # DASHBOARD PRINCIPAL
