@@ -601,7 +601,6 @@ with st.container(border=True):
 
 # Análise por hora.
 #===========================================================================================================================================================
-
 with st.container(border=True):
     st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora (com Drill-down por Período)</h4>", unsafe_allow_html=True)
 
@@ -671,18 +670,20 @@ with st.container(border=True):
 
     fig.update_layout(
         title="Desempenho por Hora",
-        xaxis=dict(title="Hora do Dia"),
+        xaxis=dict(title="Hora do Dia", showgrid=False),
         yaxis=dict(
             title="Faturamento (R$)",
             tickprefix="R$ ",
             tickformat=",.0f",
-            titlefont=dict(color="#FE9C37")
+            titlefont=dict(color="#FE9C37"),
+            showgrid=False
         ),
         yaxis2=dict(
             title="Qtd. Vendas",
             overlaying="y",
             side="right",
-            titlefont=dict(color="#862E3A")
+            titlefont=dict(color="#862E3A"),
+            showgrid=False
         ),
         legend=dict(orientation="h", y=1.02, x=0.5, xanchor="center", yanchor="bottom"),
         height=460,
