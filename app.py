@@ -558,95 +558,130 @@ with st.container(border=True):
         st.plotly_chart(fig_grafo, use_container_width=True)
 
 
-# Evolução de Faturamento por Dia da Semana
-#==============================================================================================================================================================
-# === Filtro de MÊS-ANO baseado no df original ===
-df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
-df_filt["ANO_MES"] = df_filt["DATA"].dt.to_period("M").astype(str)
+#Evolução de venda por dia da semana
+#===========================================================================================================================================================
+with st.container(border=True):
+    st.markdown("<h4 style='color:#862E3A;'>📊 Evolução de Faturamento por Dia da Semana (Drilldown Mensal com Cores)</h4>", unsafe_allow_html=True)
 
-meses_disp = sorted(df["ANO_MES"].unique())
-mes_atual = pd.Timestamp.today().to_period("M").strftime("%Y-%m")
-mes_anterior = (pd.Timestamp.today() - pd.DateOffset(months=1)).to_period("M").strftime("%Y-%m")
+    df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
+    meses_disp = sorted(df_filt["MES_ANO"].unique())
+    meses_selecionados = st.multiselect("Selecionar Mês(es):", meses_disp, default=[meses_disp[-1]])
 
-meses_selecionados = st.multiselect(
-    "Selecionar Mês(es):",
-    options=meses_disp,
-    default=[mes_anterior, mes_atual]
-)
+    df_mes = df_filt[df_filt["MES_ANO"].isin(meses_selecionados)].copy()
+    df_mes["SEMANA"] = df_mes["DATA"].dt.isocalendar().week
+    df_mes["ANO"] = df_mes["DATA"].dt.year
+    dias_traduzidos = {
+        "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
+        "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
+    }
+    df_mes["DIA_SEMANA"] = df_mes["DATA"].dt.day_name().map(dias_traduzidos)
 
-# Aplicar o filtro pelos meses selecionados no df_filt
-df_periodos = df_filt[df_filt["ANO_MES"].isin(meses_selecionados)].copy()
+    df_mes["INICIO_SEMANA"] = df_mes["DATA"] - pd.to_timedelta(df_mes["DATA"].dt.weekday, unit="d")
+    df_mes["FIM_SEMANA"] = df_mes["INICIO_SEMANA"] + pd.Timedelta(days=6)
+    df_mes["PERIODO"] = df_mes["INICIO_SEMANA"].dt.strftime('%d/%m') + " à " + df_mes["FIM_SEMANA"].dt.strftime('%d/%m')
 
-# Traduzir nomes dos dias da semana
-dias_traduzidos = {
-    "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
-    "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
-}
-df_periodos["DIA_SEMANA"] = df_periodos["DATA"].dt.day_name().map(dias_traduzidos)
+    df_grouped = df_mes.groupby(["SEMANA", "PERIODO", "DIA_SEMANA"])["TOTAL"].sum().reset_index()
+    df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TOTAL").fillna(0)
+    ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    df_pivot = df_pivot.reindex(ordem)
+    df_pivot = df_pivot[sorted(df_pivot.columns, key=lambda x: datetime.strptime(x.split(" à ")[0], "%d/%m"))]
 
-# === Agrupamento por DIA_SEMANA e ANO_MES
-df_semana = df_periodos.groupby(["DIA_SEMANA", "ANO_MES"])["TOTAL"].sum().reset_index()
-df_pivot = df_semana.pivot(index="DIA_SEMANA", columns="ANO_MES", values="TOTAL").fillna(0)
+    df_formatada = pd.DataFrame(index=df_pivot.index)
+    colunas = df_pivot.columns.tolist()
+    variacoes_pct = pd.DataFrame(index=df_pivot.index)
 
-# Ordenar os dias de DOMINGO a SÁBADO
-ordem = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
-df_pivot = df_pivot.reindex(ordem, fill_value=0)
+    for i, col in enumerate(colunas):
+        col_fmt = []
+        var_list = []
+        for idx in df_pivot.index:
+            valor = df_pivot.loc[idx, col]
+            texto = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            variacao = None
 
-# Criar a tabela HTML com total acumulado ao final e variação percentual
-colunas = df_pivot.columns.tolist()
-tabela_html = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
-tabela_html += "<thead><tr><th style='padding: 6px; border: 1px solid #555;'>Dia da Semana</th>"
-for col in colunas:
-    tabela_html += f"<th style='padding: 6px; border: 1px solid #555;'>{col}</th>"
-if len(colunas) >= 2:
-    tabela_html += "<th style='padding: 6px; border: 1px solid #555;'>Variação</th>"
-tabela_html += "</tr></thead><tbody>"
+            if i > 0:
+                valor_ant = df_pivot.loc[idx, colunas[i - 1]]
+                if valor_ant > 0:
+                    variacao = (valor - valor_ant) / valor_ant
+                    cor = "green" if variacao > 0 else "red"
+                    texto += f"<br><span style='color:{cor}; font-size: 12px'>{variacao:+.2%}</span>"
+            col_fmt.append(texto)
+            var_list.append(variacao)
+        df_formatada[col] = col_fmt
+        variacoes_pct[col] = var_list
 
-# Linhas por dia da semana
-for idx in df_pivot.index:
-    linha = f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{idx}</td>"
-    valores = [df_pivot.loc[idx, col] for col in colunas]
-    for val in valores:
-        texto = f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        linha += f"<td style='padding: 6px; border: 1px solid #555;'>{texto}</td>"
+    # === Tabela HTML
+    tabela_html = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
+    tabela_html += "<thead><tr><th style='padding: 6px; border: 1px solid #555;'>DIA_SEMANA</th>"
 
-    if len(colunas) >= 2:
-        val_atual = valores[-1]
-        val_anterior = valores[-2]
-        if val_anterior != 0:
-            variacao = (val_atual - val_anterior) / val_anterior
-            cor = "green" if variacao >= 0 else "red"
-            texto_var = f"{variacao:+.1%}"
-        else:
-            texto_var = "N/A"
-            cor = "gray"
-        linha += f"<td style='padding: 6px; border: 1px solid #555; color:{cor}'>{texto_var}</td>"
-    linha += "</tr>"
-    tabela_html += linha
+    for col in colunas:
+        tabela_html += f"<th style='padding: 6px; border: 1px solid #555;'>{col}</th>"
+    tabela_html += "</tr></thead><tbody>"
 
-# Linha de total da semana
-linha_total = "<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold'>TOTAL SEMANA</td>"
-totais = [df_pivot[col].sum() for col in colunas]
-for total in totais:
-    texto = f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    linha_total += f"<td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{texto}</td>"
+    for idx in df_formatada.index:
+        tabela_html += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{idx}</td>"
+        for col in colunas:
+            celula = df_formatada.loc[idx, col]
+            pct = variacoes_pct.loc[idx, col]
 
-if len(totais) >= 2:
-    if totais[-2] != 0:
-        total_var = (totais[-1] - totais[-2]) / totais[-2]
-        cor_total = "green" if total_var >= 0 else "red"
-        texto_total_var = f"{total_var:+.1%}"
-    else:
-        cor_total = "gray"
-        texto_total_var = "N/A"
-    linha_total += f"<td style='padding: 6px; border: 1px solid #555; font-weight: bold; color:{cor_total}'>{texto_total_var}</td>"
+            # Cor de fundo com proteção
+            # Cor de fundo com cor fixa (sem degradê)
+            if pct is None or pd.isna(pct):
+                fundo = "#f0f0f0"
+            elif pct >= 0:
+                fundo = "#CCFFCC"  # verde fixo
+            else:
+                fundo = "#FFCCCC"  # vermelho fixo
 
-linha_total += "</tr>"
-tabela_html += linha_total
+            tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111;'>{celula}</td>"
+        tabela_html += "</tr>"
+    tabela_html += "</tbody></table>"
 
-tabela_html += "</tbody></table>"
-st.markdown(tabela_html, unsafe_allow_html=True)
-#==============================================================================================================================================================
+    st.markdown(tabela_html, unsafe_allow_html=True)
+
+    # === Exportação para Excel
+    output = io.BytesIO()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Comparativo"
+
+    # Cabeçalhos
+    ws.append(["DIA_SEMANA"] + colunas)
+
+    # Dados com variações simples
+    for idx in df_pivot.index:
+        linha = [idx]
+        for col in colunas:
+            val = df_pivot.loc[idx, col]
+            linha.append(round(val, 2))
+        ws.append(linha)
+
+    # Estilização no Excel
+    for row in ws.iter_rows(min_row=2, min_col=2):
+        for cell in row:
+            pct_row = cell.row - 2
+            pct_col = cell.column - 2
+            try:
+                pct = variacoes_pct.iloc[pct_row, pct_col]
+                if pct is not None:
+                    if pct >= 0:
+                        fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")
+                    else:
+                        fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+                    cell.fill = fill
+            except:
+                continue
+            cell.alignment = Alignment(horizontal="center")
+
+    wb.save(output)
+    st.download_button(
+        label="📥 Baixar Excel",
+        data=output.getvalue(),
+        file_name="comparativo_dia_da_semana.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+#===========================================================================================================================================================
+
 
 
 
