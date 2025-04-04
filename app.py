@@ -609,7 +609,7 @@ with st.container(border=True):
     min_data = df_filt["DATA"].min().date()
     max_data = df_filt["DATA"].max().date()
     hoje = datetime.today().date()
-    
+
     col1, col2 = st.columns(2)
     with col1:
         data_inicio = st.date_input("📅 Data Início", value=hoje, min_value=min_data, max_value=max_data)
@@ -628,18 +628,24 @@ with st.container(border=True):
     df_hora["HORA_STR"] = df_hora["HORA"].astype(str) + "h"
     media_total = df_hora["TOTAL"].mean()
 
+    # Rótulo de dados: Faturamento + Ticket Médio
+    df_hora["LABEL"] = df_hora.apply(
+        lambda row: f"R$ {row['TOTAL']:,.2f}\n🎫 R$ {row['TICKET_MEDIO']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+        axis=1
+    )
+
     # Gráfico
     fig = go.Figure()
 
-    # Barras - Faturamento com rótulo de Ticket Médio
+    # Barras - Faturamento
     fig.add_trace(go.Bar(
         x=df_hora["HORA_STR"],
         y=df_hora["TOTAL"],
         name="Faturamento",
         marker_color="#FE9C37",
-        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in df_hora["TICKET_MEDIO"]],
+        text=df_hora["LABEL"],
         textposition="outside",
-        hovertemplate="<b>Faturamento:</b> R$ %{y:,.2f}<br><b>Ticket Médio:</b> %{text}<extra></extra>"
+        hovertemplate="<b>Hora:</b> %{x}<br><b>Faturamento:</b> R$ %{y:,.2f}<br><b>🎫 Ticket Médio:</b> %{text}<extra></extra>"
     ))
 
     # Linha - Quantidade de Vendas
@@ -666,10 +672,20 @@ with st.container(border=True):
     fig.update_layout(
         title="Desempenho por Hora",
         xaxis=dict(title="Hora do Dia"),
-        yaxis=dict(title="Faturamento (R$)", tickprefix="R$ ", tickformat=",.0f"),
-        yaxis2=dict(title="Qtd. Vendas", overlaying="y", side="right"),
+        yaxis=dict(
+            title="Faturamento (R$)",
+            tickprefix="R$ ",
+            tickformat=",.0f",
+            titlefont=dict(color="#FE9C37")
+        ),
+        yaxis2=dict(
+            title="Qtd. Vendas",
+            overlaying="y",
+            side="right",
+            titlefont=dict(color="#862E3A")
+        ),
         legend=dict(orientation="h", y=1.02, x=0.5, xanchor="center", yanchor="bottom"),
-        height=450,
+        height=460,
         margin=dict(t=60, l=50, r=50, b=40)
     )
 
@@ -694,7 +710,6 @@ with st.container(border=True):
         file_name="vendas_por_hora.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 #===========================================================================================================================================================
 
 #Evolução de venda por dia da semana
