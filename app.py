@@ -88,7 +88,7 @@ metas["ANO_MES"] = pd.to_datetime(metas["ANO-MES"]).dt.to_period("M").astype(str
 todas_uns = sorted(metas["LOJA"].dropna().unique())
 
 # Sidebar com controles
-data_ini, data_fim, un_selecionadas, tema = montar_sidebar(df, todas_uns)
+data_ini, data_fim, un_selecionadas = montar_sidebar(df, todas_uns)
 
 # Aplica o filtro de data no DataFrame principal
 df = df[(df["DATA"] >= pd.to_datetime(data_ini)) & (df["DATA"] <= pd.to_datetime(data_fim))]
