@@ -697,15 +697,13 @@ with st.container(border=True):
         tabela_html += "</tr>"
 
     # Linha de totais
-    tabela_html += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold; background-color: #ddd;'>TOTAL</td>"
+    tabela_html += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold; background-color: #ddd; color: #111;'>TOTAL</td>"
     for i, col in enumerate(colunas):
         fundo = "#f0f0f0"
         if i > 0 and totais_variacoes[i] is not None:
             fundo = "#CCFFCC" if totais_variacoes[i] >= 0 else "#FFCCCC"
-        tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; font-weight: bold;'>{totais_formatados[i]}</td>"
-    tabela_html += "</tr>"
+        tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111; font-weight: bold;'>{totais_formatados[i]}</td>"
 
-    tabela_html += "</tbody></table>"
 
     st.markdown(tabela_html, unsafe_allow_html=True)
 
