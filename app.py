@@ -632,7 +632,7 @@ for total in totais:
     linha_total += f"<td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{texto}</td>"
 
 if len(totais) >= 2:
-    total_var = (totais[-1] - totals[-2]) / totals[-2] if totals[-2] != 0 else None
+        total_var = (totais[-1] - totais[-2]) / totais[-2] if totais[-2] != 0 else None
     if total_var is not None:
         cor = "green" if total_var >= 0 else "red"
         texto_var = f"{total_var:+.1%}"
