@@ -599,9 +599,16 @@ with st.container(border=True):
 # Análise por hora.
 #===========================================================================================================================================================
 with st.container(border=True):
-    st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora (com Drill-down Diário)</h4>", unsafe_allow_html=True)
 
-    df_hora = df_filt.groupby("HORA").agg({
+    # Filtro de datas
+    datas_disponiveis = sorted(df_filt["DATA"].dt.date.unique())
+    datas_selecionadas = st.multiselect("Selecionar data(s):", datas_disponiveis, default=[datas_disponiveis[-1]])
+
+    df_hora = df_filt[df_filt["DATA"].dt.date.isin(datas_selecionadas)].copy()
+
+    # Agrupar por hora
+    df_hora = df_hora.groupby("HORA").agg({
         "TOTAL": "sum",
         "COD_VENDA": "nunique"
     }).reset_index().sort_values("HORA")
@@ -613,17 +620,18 @@ with st.container(border=True):
 
     fig = go.Figure()
 
-    # Faturamento (barras)
+    # Faturamento - Barras com rótulo de Ticket Médio
     fig.add_trace(go.Bar(
         x=df_hora["HORA_STR"],
         y=df_hora["TOTAL"],
         name="Faturamento",
         marker_color="#FE9C37",
-        yaxis="y1",
-        hovertemplate="Faturamento: R$ %{y:,.2f}<extra></extra>"
+        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in df_hora["TICKET_MEDIO"]],
+        textposition="outside",
+        hovertemplate="<b>Faturamento:</b> R$ %{y:,.2f}<br><b>Ticket Médio:</b> %{text}<extra></extra>"
     ))
 
-    # Qtde de Vendas (linha)
+    # Quantidade de vendas - Linha (eixo à direita)
     fig.add_trace(go.Scatter(
         x=df_hora["HORA_STR"],
         y=df_hora["COD_VENDA"],
@@ -634,23 +642,11 @@ with st.container(border=True):
         hovertemplate="Vendas: %{y}<extra></extra>"
     ))
 
-    # Ticket Médio (linha pontilhada no mesmo eixo do faturamento)
-    fig.add_trace(go.Scatter(
-        x=df_hora["HORA_STR"],
-        y=df_hora["TICKET_MEDIO"],
-        name="Ticket Médio",
-        mode="lines+markers",
-        marker=dict(color="#A4B494"),
-        line=dict(dash="dot"),
-        yaxis="y3",
-        hovertemplate="Ticket Médio: R$ %{y:,.2f}<extra></extra>"
-    ))
-
     fig.update_layout(
-        title="Desempenho por Hora do Dia",
-        xaxis=dict(title="Hora"),
+        title="Desempenho por Hora",
+        xaxis=dict(title="Hora do Dia"),
         yaxis=dict(
-            title="R$ (Faturamento / Ticket Médio)",
+            title="Faturamento (R$)",
             titlefont=dict(color="#FE9C37"),
             tickprefix="R$ ",
             tickformat=",.0f",
@@ -669,8 +665,6 @@ with st.container(border=True):
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-
 
 #Evolução de venda por dia da semana
 #===========================================================================================================================================================
