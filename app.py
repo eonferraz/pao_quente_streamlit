@@ -13,6 +13,7 @@ import networkx as nx
 import scipy
 import calendar 
 import plotly.io as pio
+import datetime as dt
 
 # CONFIG INICIAL
 st.set_page_config(
