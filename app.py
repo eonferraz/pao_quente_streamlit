@@ -82,28 +82,24 @@ def montar_sidebar(df, todas_uns):
     return data_ini, data_fim, un_selecionadas, analise, tema, ambiente
 #====================================================================================================================================
 
-
 # CARGA E PREPARO
 with st.spinner("🔄 Carregando dados..."):
     df, metas = carregar_dados()
-    montar_sidebar(df, todas_uns)
-
-
-
-
-
-
-
 
 # Limpeza e padronização
 df.columns = df.columns.str.strip().str.upper()
 metas.columns = metas.columns.str.strip().str.upper()
-
-# Datas e colunas derivadas
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
 df = df.dropna(subset=["DATA"])
-df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
-df["DIA"] = df["DATA"].dt.day
+
+# Agora sim, define todas_uns
+todas_uns = sorted(metas["LOJA"].dropna().unique())
+
+# Sidebar com controles
+data_ini, data_fim, un_selecionadas, analise, tema, ambiente = montar_sidebar(df, todas_uns)
+
+# Aplica o filtro de data no DataFrame principal
+df = df[(df["DATA"] >= pd.to_datetime(data_ini)) & (df["DATA"] <= pd.to_datetime(data_fim))]
 
 # Cria ANO_MES na tabela de metas
 metas["ANO_MES"] = pd.to_datetime(metas["ANO-MES"]).dt.to_period("M").astype(str)
