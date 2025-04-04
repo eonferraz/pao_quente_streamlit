@@ -56,31 +56,50 @@ def montar_sidebar(df, todas_uns):
     # 3. Filtro de Unidade
     un_selecionadas = st.sidebar.multiselect("🏬 Unidades:", todas_uns, default=todas_uns)
 
-    # 4. Tipo de Análise
-    analise = st.sidebar.radio("🔍 Tipo de Análise:", [
-        "Dashboard Geral", "Produtos", "Dia da Semana", "Ticket Médio"
-    ])
-
     st.sidebar.markdown("---")
-
+    
     # 5. Tema (ainda não aplicado no visual, mas pode ser usado)
     tema = st.sidebar.selectbox("🎨 Tema de Cores", ["Padrão", "Escuro", "Claro"])
 
-    # 6. Ambiente
-    ambiente = st.sidebar.selectbox("⚙️ Ambiente", ["Produção", "Teste"])
-
     st.sidebar.markdown("---")
-
     # 7. Botão para limpar filtros
     if st.sidebar.button("🧹 Limpar Filtros"):
         st.session_state.clear()
         st.experimental_rerun()
 
-    # 8. Notificação (Exemplo)
-    st.sidebar.info("📌 Dica: clique em 'Recarregar Dados' após atualizações no banco.")
-
     return data_ini, data_fim, un_selecionadas, analise, tema, ambiente
 #====================================================================================================================================
+
+
+data_ini, data_fim, un_selecionadas, tema = montar_sidebar(df, todas_uns)
+aplicar_tema(tema)
+
+#====================================================================================================================================
+def aplicar_tema(tema):
+    if tema == "Escuro":
+        st.markdown("""
+            <style>
+                body, .stApp {
+                    background-color: #1e1e1e;
+                    color: #f0f0f0;
+                }
+                .block-container {
+                    background-color: #1e1e1e;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+    elif tema == "Claro":
+        st.markdown("""
+            <style>
+                body, .stApp {
+                    background-color: #ffffff;
+                    color: #111111;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+    # "Padrão" não aplica nada extra
+#====================================================================================================================================
+
 
 # CARGA E PREPARO
 with st.spinner("🔄 Carregando dados..."):
