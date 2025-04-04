@@ -598,73 +598,51 @@ with st.container(border=True):
 
 # Análise por hora.
 #===========================================================================================================================================================
-with st.container(border=True):
-    st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora (com Drill-down Diário)</h4>", unsafe_allow_html=True)
+# =======================
+# 🎯 FILTRO POR PERÍODO
+# =======================
+st.markdown("---")
+st.markdown("<h4 style='color:#862E3A;'>🕒 Faturamento por Hora com Drilldown Diário</h4>", unsafe_allow_html=True)
 
-    # Filtro de datas
-    datas_disponiveis = sorted(df_filt["DATA"].dt.date.unique())
-    datas_selecionadas = st.multiselect("Selecionar data(s):", datas_disponiveis, default=[datas_disponiveis[-1]])
+col_dt1, col_dt2 = st.columns(2)
+with col_dt1:
+    data_inicio = st.date_input("📅 Data Início", value=dt.date(2025, 1, 1), format="YYYY/MM/DD")
+with col_dt2:
+    data_fim = st.date_input("📅 Data Fim", value=dt.date(2025, 4, 4), format="YYYY/MM/DD")
 
-    df_hora = df_filt[df_filt["DATA"].dt.date.isin(datas_selecionadas)].copy()
+df_horas = df.copy()
+df_horas = df_horas[(df_horas["DATA"].dt.date >= data_inicio) & (df_horas["DATA"].dt.date <= data_fim)]
 
-    # Agrupar por hora
-    df_hora = df_hora.groupby("HORA").agg({
-        "TOTAL": "sum",
-        "COD_VENDA": "nunique"
-    }).reset_index().sort_values("HORA")
+df_horas["HORA"] = df_horas["DATA"].dt.hour
+df_horas["DIA"] = df_horas["DATA"].dt.date
 
-    df_hora["TICKET_MEDIO"] = df_hora["TOTAL"] / df_hora["COD_VENDA"]
-    df_hora["HORA_STR"] = df_hora["HORA"].astype(str) + "h"
+df_group = df_horas.groupby(["DIA", "HORA"]).agg(
+    FATURAMENTO=("TOTAL", "sum"),
+    QTD_VENDAS=("COD_VENDA", "nunique")
+).reset_index()
 
-    import plotly.graph_objects as go
+df_group["TICKET_MEDIO"] = df_group["FATURAMENTO"] / df_group["QTD_VENDAS"]
+df_group["HORA"] = df_group["HORA"].astype(str).str.zfill(2)
 
-    fig = go.Figure()
+# =======================
+# PLOTAGEM
+# =======================
+import plotly.express as px
 
-    # Faturamento - Barras com rótulo de Ticket Médio
-    fig.add_trace(go.Bar(
-        x=df_hora["HORA_STR"],
-        y=df_hora["TOTAL"],
-        name="Faturamento",
-        marker_color="#FE9C37",
-        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in df_hora["TICKET_MEDIO"]],
-        textposition="outside",
-        hovertemplate="<b>Faturamento:</b> R$ %{y:,.2f}<br><b>Ticket Médio:</b> %{text}<extra></extra>"
-    ))
+fig = px.line(df_group, x="HORA", y="FATURAMENTO", color="DIA", markers=True,
+              labels={"FATURAMENTO": "Faturamento", "HORA": "Hora do Dia", "DIA": "Data"},
+              hover_data=["QTD_VENDAS", "TICKET_MEDIO"])
 
-    # Quantidade de vendas - Linha (eixo à direita)
-    fig.add_trace(go.Scatter(
-        x=df_hora["HORA_STR"],
-        y=df_hora["COD_VENDA"],
-        name="Qtd. Vendas",
-        mode="lines+markers",
-        marker=dict(color="#862E3A"),
-        yaxis="y2",
-        hovertemplate="Vendas: %{y}<extra></extra>"
-    ))
+fig.update_traces(mode="lines+markers", marker=dict(size=6))
+fig.update_layout(
+    xaxis=dict(title="Hora do Dia"),
+    yaxis=dict(title="Faturamento", tickprefix="R$ ", tickformat=",.0f"),
+    legend_title="Data",
+    hovermode="x unified",
+    height=450
+)
 
-    fig.update_layout(
-        title="Desempenho por Hora",
-        xaxis=dict(title="Hora do Dia"),
-        yaxis=dict(
-            title="Faturamento (R$)",
-            titlefont=dict(color="#FE9C37"),
-            tickprefix="R$ ",
-            tickformat=",.0f",
-            showgrid=False
-        ),
-        yaxis2=dict(
-            title="Qtd. Vendas",
-            titlefont=dict(color="#862E3A"),
-            overlaying="y",
-            side="right",
-            showgrid=False
-        ),
-        legend=dict(orientation="h", y=1.02, x=0.5, xanchor="center", yanchor="bottom"),
-        margin=dict(t=60, l=50, r=50, b=40),
-        height=450
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
 #Evolução de venda por dia da semana
 #===========================================================================================================================================================
