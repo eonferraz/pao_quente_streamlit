@@ -651,14 +651,14 @@ with st.container(border=True):
         title="Desempenho por Hora",
         xaxis=dict(title="Hora do Dia"),
         yaxis=dict(
-            title="Faturamento",
+            title="R$ (Faturamento / Ticket Médio)",
             titlefont=dict(color="#FE9C37"),
             tickprefix="R$ ",
             tickformat=",.0f",
             showgrid=False
         ),
         yaxis2=dict(
-            title="Qtd. Vendas",
+            title="Quantidade de Vendas",
             titlefont=dict(color="#862E3A"),
             overlaying="y",
             side="right",
