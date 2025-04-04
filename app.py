@@ -1092,26 +1092,10 @@ with st.container(border=True):
     )
 #===========================================================================================================================================================
 
-with st.container(border=True):
-    st.markdown("### 📤 Exportar Dados Gerais do Dashboard")
 
-    # Prepara o DataFrame para exportação
-    df_export = df_filt.copy()
-    df_export = df_export.sort_values("DATA")
-    
-    # Converte colunas de data para string formatada
-    if "DATA" in df_export.columns:
-        df_export["DATA"] = df_export["DATA"].dt.strftime('%d/%m/%Y')
 
-    # Cria arquivo Excel em memória
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df_export.to_excel(writer, index=False, sheet_name="Dados_Gerais")
-
-    st.download_button(
-        label="📥 Baixar Excel com Dados Filtrados",
-        data=output.getvalue(),
-        file_name="dados_gerais_dashboard.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
+# =======================
+# 📋 TABELA DETALHADA
+# =======================
+with st.expander("📋 Ver dados detalhados"):
+    st.dataframe(df_filtrado, use_container_width=True)
