@@ -89,7 +89,9 @@ with st.spinner("🔄 Carregando dados..."):
 # Limpeza e padronização
 df.columns = df.columns.str.strip().str.upper()
 metas.columns = metas.columns.str.strip().str.upper()
+
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
+df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
 df = df.dropna(subset=["DATA"])
 
 # Agora sim, define todas_uns
