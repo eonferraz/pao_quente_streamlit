@@ -93,8 +93,7 @@ data_ini, data_fim, un_selecionadas = montar_sidebar(df, todas_uns)
 # Aplica o filtro de data no DataFrame principal
 df = df[(df["DATA"] >= pd.to_datetime(data_ini)) & (df["DATA"] <= pd.to_datetime(data_fim))]
 
-# Aplica o tema visual
-aplicar_tema(tema)
+
 
 # ====================
 # CSS para o cabeçalho
