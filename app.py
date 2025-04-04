@@ -131,69 +131,11 @@ with st.container():
 df_filt = df[(df["UN"].isin(un_selecionadas)) & (df["ANO_MES"].isin(meses_selecionados))]
 metas_filt = metas[(metas["LOJA"].isin(un_selecionadas)) & (metas["ANO_MES"].isin(meses_selecionados))]
 
-
-
-# ====================
-# EDIÇÃO DE METAS
-# ====================
-with st.container(border=True):
-    if st.button("✏️ Editar Metas de Faturamento"):
-        st.session_state['editar_metas'] = True
-
-if st.session_state.get('editar_metas', False):
-    st.markdown("### 🗓️ Edição de Metas por Unidade - Ano 2025")
-
-    meses_2025 = pd.date_range(start="2025-01-01", end="2025-12-01", freq='MS').strftime('%Y-%m')
-    unidades = ["P1", "P3", "P4", "P5"]
-
-    # Montar base com dados existentes
-    df_input = pd.DataFrame(index=meses_2025, columns=unidades)
-    df_input.index.name = "ANO-MES"
-
-    metas_2025 = metas[(metas["ANO-MES"].isin(meses_2025)) & (metas["LOJA"].isin(unidades))]
-    for _, row in metas_2025.iterrows():
-        df_input.at[row["ANO-MES"], row["LOJA"]] = row["VALOR_META"]
-
-    edited_df = st.data_editor(df_input, num_rows="dynamic", use_container_width=True, key="meta_editor")
-
-    col_btn1, col_btn2 = st.columns([1, 1])
-    with col_btn1:
-        if st.button("💾 Salvar Metas"):
-            try:
-                conn = pyodbc.connect(
-                    'DRIVER={ODBC Driver 17 for SQL Server};'
-                    'SERVER=sx-global.database.windows.net;'
-                    'DATABASE=sx_comercial;'
-                    'UID=paulo.ferraz;'
-                    'PWD=Gs!^42j$G0f0^EI#ZjRv'
-                )
-                cursor = conn.cursor()
-                for ano_mes in edited_df.index:
-                    for loja in unidades:
-                        valor = edited_df.loc[ano_mes, loja]
-                        if valor != "" and not pd.isna(valor):
-                            cursor.execute("""
-                                IF EXISTS (SELECT 1 FROM PQ_METAS WHERE [ANO-MES] = ? AND LOJA = ?)
-                                    UPDATE PQ_METAS SET VALOR_META = ? WHERE [ANO-MES] = ? AND LOJA = ?
-                                ELSE
-                                    INSERT INTO PQ_METAS ([ANO-MES], LOJA, VALOR_META) VALUES (?, ?, ?)
-                            """, ano_mes, loja, valor, ano_mes, loja, ano_mes, loja, valor)
-                conn.commit()
-                conn.close()
-                st.success("✅ Metas salvas com sucesso!")
-                st.session_state['editar_metas'] = False
-            except Exception as e:
-                st.error(f"Erro ao salvar as metas: {e}")
-    with col_btn2:
-        if st.button("❌ Cancelar"):
-            st.session_state['editar_metas'] = False
-
 # ====================
 # DASHBOARD PRINCIPAL
 # ====================
 
 col1, col2 = st.columns([1, 4.2])
-
 
 # CARDS
 #=====================================================================================================================================================================
