@@ -640,6 +640,7 @@ if len(totais) >= 2:
         cor_total = "gray"
         texto_total_var = "N/A"
     linha_total += f"<td style='padding: 6px; border: 1px solid #555; font-weight: bold; color:{cor_total}'>{texto_total_var}</td>"
+
 linha_total += "</tr>"
 tabela_html += linha_total
 
