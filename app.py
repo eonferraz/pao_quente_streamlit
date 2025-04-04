@@ -72,7 +72,7 @@ def montar_sidebar(df, todas_uns):
 
 
 data_ini, data_fim, un_selecionadas, tema = montar_sidebar(df, todas_uns)
-aplicar_tema(tema)
+
 
 #====================================================================================================================================
 def aplicar_tema(tema):
