@@ -739,16 +739,28 @@ with st.container(border=True):
             pct_row = cell.row - 2
             pct_col = cell.column - 2
             try:
-                if cell.row == ws.max_row:  # Última linha = TOTAL
+                # Última linha = total
+                is_total = cell.row == ws.max_row
+    
+                # Seleciona variação correta
+                if is_total:
                     pct = totais_variacoes[pct_col] if pct_col < len(totais_variacoes) else None
                 else:
                     pct = variacoes_pct.iloc[pct_row, pct_col]
+    
+                # Aplica preenchimento
                 if pct is not None:
-                    fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid") if pct >= 0 else PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+                    if pct >= 0:
+                        fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")
+                    else:
+                        fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
                     cell.fill = fill
-            except:
+    
+                # Aplica alinhamento
+                cell.alignment = Alignment(horizontal="center")
+    
+            except Exception:
                 continue
-            cell.alignment = Alignment(horizontal="center")
     
     # Download
     wb.save(output)
