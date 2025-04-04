@@ -5,7 +5,7 @@ import plotly.express as px
 import base64
 import io
 from openpyxl import Workbook
-from openpyxl.styles import PatternFill, Alignment
+from openpyxl.styles import PatternFill, Alignment, Font
 from datetime import datetime
 import numpy as np
 from plotly import graph_objects as go
@@ -749,20 +749,16 @@ with st.container(border=True):
                 if pct is not None:
                     if pct >= 0:
                         fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")
-                        fonte = Font(color="008000")  # verde escuro
                     else:
                         fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
-                        fonte = Font(color="FF0000")  # vermelho
-    
                     cell.fill = fill
-                    if is_total:
-                        cell.font = fonte  # aplica cor de texto só na linha de total
     
+                cell.font = Font(color="000000")  # cor preta para todas as células
                 cell.alignment = Alignment(horizontal="center")
     
             except Exception:
                 continue
-                
+                    
     # Download
     wb.save(output)
     st.download_button(
