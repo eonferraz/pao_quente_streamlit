@@ -36,6 +36,12 @@ def carregar_dados():
 with st.spinner("🔄 Carregando dados..."):
     df, metas = carregar_dados()
 
+# === Botão para recarregar dados ===
+with st.sidebar:
+    if st.button("🔄 Recarregar Dados"):
+        st.cache_data.clear()
+        st.experimental_rerun()
+
 # Limpeza e padronização
 df.columns = df.columns.str.strip().str.upper()
 metas.columns = metas.columns.str.strip().str.upper()
