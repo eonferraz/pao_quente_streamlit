@@ -559,7 +559,7 @@ with st.container(border=True):
 
 
 # Evolução de Faturamento por Dia da Semana
-#=============================================================================================================================================================
+#==============================================================================================================================================================
 # === Filtro de MÊS-ANO baseado no df original ===
 df["ANO_MES"] = df["DATA"].dt.to_period("M").astype(str)
 df_filt["ANO_MES"] = df_filt["DATA"].dt.to_period("M").astype(str)
@@ -632,21 +632,20 @@ for total in totais:
     linha_total += f"<td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{texto}</td>"
 
 if len(totais) >= 2:
-        total_var = (totais[-1] - totais[-2]) / totais[-2] if totais[-2] != 0 else None
-    if total_var is not None:
-        cor = "green" if total_var >= 0 else "red"
-        texto_var = f"{total_var:+.1%}"
+    if totais[-2] != 0:
+        total_var = (totais[-1] - totais[-2]) / totais[-2]
+        cor_total = "green" if total_var >= 0 else "red"
+        texto_total_var = f"{total_var:+.1%}"
     else:
-        cor = "gray"
-        texto_var = "N/A"
-    linha_total += f"<td style='padding: 6px; border: 1px solid #555; font-weight: bold; color:{cor}'>{texto_var}</td>"
+        cor_total = "gray"
+        texto_total_var = "N/A"
+    linha_total += f"<td style='padding: 6px; border: 1px solid #555; font-weight: bold; color:{cor_total}'>{texto_total_var}</td>"
 linha_total += "</tr>"
 tabela_html += linha_total
 
 tabela_html += "</tbody></table>"
 st.markdown(tabela_html, unsafe_allow_html=True)
-
-#=============================================================================================================================================================
+##=============================================================================================================================================================
 
 
 # Evolução do Ticket Médio por dia da semana
