@@ -318,7 +318,7 @@ with col2:
 #=====================================================================================================================================================================
 
 
-st.markdown("---")
+#st.markdown("---")
 
 
 col3a, col3c, col3b = st.columns(3)  # Desempacota as colunas corretamente
@@ -462,7 +462,7 @@ with col3:
         st.plotly_chart(fig_pie, use_container_width=True)
 
 
-st.markdown("---")
+#st.markdown("---")
 
 
 
