@@ -930,3 +930,164 @@ with st.container(border=True):
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 #===========================================================================================================================================================
+
+# Evolução do Ticket Médio por Dia da Semana
+#===========================================================================================================================================================
+with st.container(border=True):
+    st.markdown("<h4 style='color:#862E3A;'>💳 Evolução do Ticket Médio por Dia da Semana (Drilldown Mensal com Cores)</h4>", unsafe_allow_html=True)
+
+    df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
+    meses_disp = sorted(df_filt["MES_ANO"].unique())
+
+    if len(meses_disp) >= 2:
+        default_meses = [meses_disp[-2], meses_disp[-1]]
+    else:
+        default_meses = meses_disp
+
+    meses_ticket = st.multiselect("Selecionar Mês(es):", meses_disp, default=default_meses, key="meses_ticket_medio")
+
+    df_mes = df_filt[df_filt["MES_ANO"].isin(meses_ticket)].copy()
+    df_mes["SEMANA"] = df_mes["DATA"].dt.isocalendar().week
+    df_mes["ANO"] = df_mes["DATA"].dt.year
+    dias_traduzidos = {
+        "Sunday": "domingo", "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
+        "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado"
+    }
+    df_mes["DIA_SEMANA"] = df_mes["DATA"].dt.day_name().map(dias_traduzidos)
+    df_mes["INICIO_SEMANA"] = df_mes["DATA"] - pd.to_timedelta(df_mes["DATA"].dt.weekday, unit="d")
+    df_mes["FIM_SEMANA"] = df_mes["INICIO_SEMANA"] + pd.Timedelta(days=6)
+    df_mes["PERIODO"] = df_mes["INICIO_SEMANA"].dt.strftime('%d/%m') + " à " + df_mes["FIM_SEMANA"].dt.strftime('%d/%m')
+
+    df_grouped = df_mes.groupby(["SEMANA", "PERIODO", "DIA_SEMANA"]).agg({"TOTAL": "sum", "COD_VENDA": "nunique"}).reset_index()
+    df_grouped["TICKET"] = df_grouped["TOTAL"] / df_grouped["COD_VENDA"]
+    df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TICKET").fillna(0)
+
+    ordem = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
+    df_pivot = df_pivot.reindex(ordem)
+    df_pivot = df_pivot[sorted(df_pivot.columns, key=lambda x: datetime.strptime(x.split(" à ")[0], "%d/%m"))]
+
+    df_formatada = pd.DataFrame(index=df_pivot.index)
+    colunas = df_pivot.columns.tolist()
+    variacoes_pct = pd.DataFrame(index=df_pivot.index)
+
+    for i, col in enumerate(colunas):
+        col_fmt = []
+        var_list = []
+        for idx in df_pivot.index:
+            valor = df_pivot.loc[idx, col]
+            texto = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            variacao = None
+
+            if i > 0:
+                valor_ant = df_pivot.loc[idx, colunas[i - 1]]
+                if valor_ant > 0:
+                    variacao = (valor - valor_ant) / valor_ant
+                    cor = "green" if variacao > 0 else "red"
+                    texto += f"<br><span style='color:{cor}; font-size: 12px'>{variacao:+.2%}</span>"
+            col_fmt.append(texto)
+            var_list.append(variacao)
+        df_formatada[col] = col_fmt
+        variacoes_pct[col] = var_list
+
+    totais_semana = df_pivot.mean(axis=0)
+    totais_variacoes = []
+    totais_formatados = []
+
+    for i, col in enumerate(colunas):
+        valor = totais_semana[col]
+        texto = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        variacao = None
+        if i > 0:
+            valor_ant = totais_semana[colunas[i - 1]]
+            if valor_ant > 0:
+                variacao = (valor - valor_ant) / valor_ant
+                cor = "green" if variacao > 0 else "red"
+                texto += f"<br><span style='color:{cor}; font-size: 12px'>{variacao:+.2%}</span>"
+        totais_formatados.append(texto)
+        totais_variacoes.append(variacao)
+
+    tabela_html = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
+    tabela_html += "<thead><tr><th style='padding: 6px; border: 1px solid #555;'>DIA_SEMANA</th>"
+
+    for col in colunas:
+        tabela_html += f"<th style='padding: 6px; border: 1px solid #555;'>{col}</th>"
+    tabela_html += "</tr></thead><tbody>"
+
+    for idx in df_formatada.index:
+        tabela_html += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold'>{idx}</td>"
+        for col in colunas:
+            celula = df_formatada.loc[idx, col]
+            pct = variacoes_pct.loc[idx, col]
+            if pct is None or pd.isna(pct):
+                fundo = "#f0f0f0"
+            elif pct >= 0:
+                fundo = "#CCFFCC"
+            else:
+                fundo = "#FFCCCC"
+            tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111;'>{celula}</td>"
+        tabela_html += "</tr>"
+
+    # Linha de totais
+    tabela_html += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold; background-color: #ddd; color: #111;'>TOTAL</td>"
+    for i, col in enumerate(colunas):
+        fundo = "#f0f0f0"
+        if i > 0 and totais_variacoes[i] is not None:
+            fundo = "#CCFFCC" if totais_variacoes[i] >= 0 else "#FFCCCC"
+        tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111; font-weight: bold;'>{totais_formatados[i]}</td>"
+    tabela_html += "</tr></tbody></table>"
+
+    st.markdown(tabela_html, unsafe_allow_html=True)
+
+    # Export Excel
+    output = io.BytesIO()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Ticket_Medio"
+
+    ws.append(["DIA_SEMANA"] + colunas)
+    for idx in df_pivot.index:
+        linha = [idx]
+        for col in colunas:
+            val = df_pivot.loc[idx, col]
+            linha.append(round(val, 2))
+        ws.append(linha)
+
+    linha_total = ["TOTAL"]
+    for col in colunas:
+        val = totais_semana[col]
+        linha_total.append(round(val, 2))
+    ws.append(linha_total)
+
+    for row in ws.iter_rows(min_row=2, min_col=2, max_row=ws.max_row):
+        for cell in row:
+            pct_row = cell.row - 2
+            pct_col = cell.column - 2
+            try:
+                is_total = cell.row == ws.max_row
+
+                if is_total:
+                    pct = totais_variacoes[pct_col] if pct_col < len(totais_variacoes) else None
+                else:
+                    pct = variacoes_pct.iloc[pct_row, pct_col]
+
+                if pct is not None:
+                    if pct >= 0:
+                        fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")
+                    else:
+                        fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+                    cell.fill = fill
+
+                cell.font = Font(color="000000")
+                cell.alignment = Alignment(horizontal="center")
+
+            except Exception:
+                continue
+
+    wb.save(output)
+    st.download_button(
+        label="📥 Baixar Excel (Ticket Médio)",
+        data=output.getvalue(),
+        file_name="comparativo_ticket_medio.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+#===========================================================================================================================================================
