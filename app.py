@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st    
 import pandas as pd
 import pyodbc
 import plotly.express as px
@@ -14,15 +14,10 @@ import scipy
 import calendar 
 import plotly.io as pio
 
-
-# ====================
 # CONFIG INICIAL
-# ====================
 st.set_page_config(page_title="Pão Quente", layout="wide")
 
-# ====================
 # CONEXÃO COM BANCO
-# ====================
 @st.cache_data(ttl=600)
 def carregar_dados():
     conn = pyodbc.connect(
@@ -37,9 +32,7 @@ def carregar_dados():
     conn.close()
     return df_vendas, df_metas
 
-# ====================
 # CARGA E PREPARO
-# ====================
 with st.spinner("🔄 Carregando dados..."):
     df, metas = carregar_dados()
 
