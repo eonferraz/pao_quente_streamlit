@@ -21,8 +21,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"  # ← isso aqui colapsa a sidebar por padrão
 )
 
+
+
 # CONEXÃO COM BANCO
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=300)
 def carregar_dados():
     conn = pyodbc.connect(
         'DRIVER={ODBC Driver 17 for SQL Server};'
@@ -36,12 +38,7 @@ def carregar_dados():
     conn.close()
     return df_vendas, df_metas
 
-# CARGA E PREPARO
-with st.spinner("🔄 Carregando dados..."):
-    df, metas = carregar_dados()
-
-montar_sidebar()
-
+#====================================================================================================================================
 def montar_sidebar(df, todas_uns):
     st.sidebar.markdown("## ⚙️ Painel de Controles")
 
@@ -83,6 +80,18 @@ def montar_sidebar(df, todas_uns):
     st.sidebar.info("📌 Dica: clique em 'Recarregar Dados' após atualizações no banco.")
 
     return data_ini, data_fim, un_selecionadas, analise, tema, ambiente
+#====================================================================================================================================
+
+
+# CARGA E PREPARO
+with st.spinner("🔄 Carregando dados..."):
+    df, metas = carregar_dados()
+    montar_sidebar(df, todas_uns)
+
+
+
+
+
 
 
 
