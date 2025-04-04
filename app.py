@@ -642,7 +642,7 @@ with st.container(border=True):
         mode="lines+markers",
         marker=dict(color="#A4B494"),
         line=dict(dash="dot"),
-        yaxis="y1",
+        yaxis="y3",
         hovertemplate="Ticket Médio: R$ %{y:,.2f}<extra></extra>"
     ))
 
