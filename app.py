@@ -600,44 +600,58 @@ with st.container(border=True):
 # Análise por hora.
 #===========================================================================================================================================================
 
-
 with st.container(border=True):
     st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora (com Drill-down Diário)</h4>", unsafe_allow_html=True)
 
-    # Filtro de datas (multiselect com calendário)
+    # Filtro de datas (com calendário)
     datas_disponiveis = sorted(df_filt["DATA"].dt.date.unique())
     datas_selecionadas = st.multiselect("Selecionar data(s):", datas_disponiveis, default=[datas_disponiveis[-1]])
 
     df_hora = df_filt[df_filt["DATA"].dt.date.isin(datas_selecionadas)].copy()
 
     # Agrupar por hora
-    df_hora = df_hora.groupby("HORA").agg({
+    df_hora_grouped = df_hora.groupby("HORA").agg({
         "TOTAL": "sum",
         "COD_VENDA": "nunique"
     }).reset_index().sort_values("HORA")
 
-    df_hora["TICKET_MEDIO"] = df_hora["TOTAL"] / df_hora["COD_VENDA"]
-    df_hora["HORA_STR"] = df_hora["HORA"].astype(str) + "h"
+    df_hora_grouped["TICKET_MEDIO"] = df_hora_grouped["TOTAL"] / df_hora_grouped["COD_VENDA"]
+    df_hora_grouped["HORA_STR"] = df_hora_grouped["HORA"].astype(str) + "h"
+
+    media_faturamento = df_hora_grouped["TOTAL"].mean()
 
     import plotly.graph_objects as go
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment
 
     fig = go.Figure()
 
-    # Faturamento - Barras com rótulo de Ticket Médio
+    # Barras de faturamento com rótulo do ticket médio
     fig.add_trace(go.Bar(
-        x=df_hora["HORA_STR"],
-        y=df_hora["TOTAL"],
+        x=df_hora_grouped["HORA_STR"],
+        y=df_hora_grouped["TOTAL"],
         name="Faturamento",
         marker_color="#FE9C37",
-        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in df_hora["TICKET_MEDIO"]],
+        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in df_hora_grouped["TICKET_MEDIO"]],
         textposition="outside",
         hovertemplate="<b>Faturamento:</b> R$ %{y:,.2f}<br><b>Ticket Médio:</b> %{text}<extra></extra>"
     ))
 
-    # Quantidade de vendas - Linha (eixo à direita)
+    # Linha da média
     fig.add_trace(go.Scatter(
-        x=df_hora["HORA_STR"],
-        y=df_hora["COD_VENDA"],
+        x=df_hora_grouped["HORA_STR"],
+        y=[media_faturamento] * len(df_hora_grouped),
+        name="Média Faturamento",
+        mode="lines",
+        line=dict(color="#A4B494", dash="dot"),
+        hoverinfo="skip"
+    ))
+
+    # Linha de quantidade de vendas (eixo secundário)
+    fig.add_trace(go.Scatter(
+        x=df_hora_grouped["HORA_STR"],
+        y=df_hora_grouped["COD_VENDA"],
         name="Qtd. Vendas",
         mode="lines+markers",
         marker=dict(color="#862E3A"),
@@ -664,10 +678,38 @@ with st.container(border=True):
         ),
         legend=dict(orientation="h", y=1.02, x=0.5, xanchor="center", yanchor="bottom"),
         margin=dict(t=60, l=50, r=50, b=40),
-        height=450
+        height=500
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+    # ============== Exportar Excel
+    output = io.BytesIO()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Vendas por Hora"
+
+    ws.append(["Hora", "Faturamento (R$)", "Qtd. Vendas", "Ticket Médio (R$)"])
+    for _, row in df_hora_grouped.iterrows():
+        ws.append([
+            f"{row['HORA']}h",
+            round(row["TOTAL"], 2),
+            row["COD_VENDA"],
+            round(row["TICKET_MEDIO"], 2)
+        ])
+
+    for col in ["A", "B", "C", "D"]:
+        for cell in ws[col]:
+            cell.alignment = Alignment(horizontal="center")
+
+    wb.save(output)
+
+    st.download_button(
+        label="📥 Baixar Excel",
+        data=output.getvalue(),
+        file_name="vendas_por_hora.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 #===========================================================================================================================================================
 
