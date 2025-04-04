@@ -1098,4 +1098,5 @@ with st.container(border=True):
 # 📋 TABELA DETALHADA
 # =======================
 with st.expander("📋 Ver dados detalhados"):
-    st.dataframe(df_filtrado, use_container_width=True)
+    st.markdown("### 📄 Dados Filtrados por UN e Período Selecionado")
+    st.dataframe(df_filt, use_container_width=True)
