@@ -597,25 +597,89 @@ with st.container(border=True):
 
 #===========================================================================================================================================================
 # Agrupando por hora
-df_hora = df_filt.groupby("HORA")["TOTAL"].sum().reset_index()
+with st.container(border=True):
+    st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora</h4>", unsafe_allow_html=True)
 
-# Convertendo HORA para string com sufixo "h" (opcional)
-df_hora["HORA_LABEL"] = df_hora["HORA"].astype(str) + "h"
+    # Agrupar os dados
+    df_hora = df_filt.groupby("HORA").agg({
+        "TOTAL": "sum",
+        "COD_VENDA": "nunique"
+    }).reset_index().sort_values("HORA")
 
-fig_polar = px.line_polar(df_hora,
-                          r="TOTAL",
-                          theta="HORA_LABEL",
-                          line_close=True,
-                          markers=True,
-                          title="🕒 Vendas por Hora do Dia (Polar)",
-                          color_discrete_sequence=["#FE9C37"])
+    df_hora["TICKET_MEDIO"] = df_hora["TOTAL"] / df_hora["COD_VENDA"]
+    df_hora["HORA_STR"] = df_hora["HORA"].astype(str) + "h"
 
-fig_polar.update_traces(fill="toself")
-fig_polar.update_layout(polar=dict(
-    angularaxis=dict(direction="clockwise")
-))
+    import plotly.graph_objects as go
 
-st.plotly_chart(fig_polar, use_container_width=True)
+    fig = go.Figure()
+
+    # Faturamento - Barras
+    fig.add_trace(go.Bar(
+        x=df_hora["HORA_STR"],
+        y=df_hora["TOTAL"],
+        name="Faturamento",
+        marker_color="#FE9C37",
+        yaxis="y1",
+        hovertemplate="Faturamento: R$ %{y:,.2f}<extra></extra>"
+    ))
+
+    # Qtde Vendas - Linha
+    fig.add_trace(go.Scatter(
+        x=df_hora["HORA_STR"],
+        y=df_hora["COD_VENDA"],
+        name="Qtd. Vendas",
+        mode="lines+markers",
+        marker=dict(color="#862E3A"),
+        yaxis="y2",
+        hovertemplate="Vendas: %{y}<extra></extra>"
+    ))
+
+    # Ticket Médio - Linha pontilhada
+    fig.add_trace(go.Scatter(
+        x=df_hora["HORA_STR"],
+        y=df_hora["TICKET_MEDIO"],
+        name="Ticket Médio",
+        mode="lines+markers",
+        marker=dict(color="#A4B494"),
+        line=dict(dash="dot"),
+        yaxis="y3",
+        hovertemplate="Ticket Médio: R$ %{y:,.2f}<extra></extra>"
+    ))
+
+    # Layout geral
+    fig.update_layout(
+        title="Desempenho por Hora",
+        xaxis=dict(title="Hora do Dia"),
+        yaxis=dict(
+            title="Faturamento",
+            titlefont=dict(color="#FE9C37"),
+            tickprefix="R$ ",
+            tickformat=",.0f",
+            showgrid=False
+        ),
+        yaxis2=dict(
+            title="Qtd. Vendas",
+            titlefont=dict(color="#862E3A"),
+            overlaying="y",
+            side="right",
+            showgrid=False
+        ),
+        yaxis3=dict(
+            title="Ticket Médio",
+            titlefont=dict(color="#A4B494"),
+            anchor="free",
+            overlaying="y",
+            side="right",
+            position=1.1,
+            showgrid=False
+        ),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+        margin=dict(t=60, l=40, r=40, b=40),
+        height=450
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 
 #Evolução de venda por dia da semana
