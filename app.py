@@ -15,7 +15,11 @@ import calendar
 import plotly.io as pio
 
 # CONFIG INICIAL
-st.set_page_config(page_title="Pão Quente", layout="wide")
+st.set_page_config(
+    page_title="Pão Quente",
+    layout="wide",
+    initial_sidebar_state="collapsed"  # ← isso aqui colapsa a sidebar por padrão
+)
 
 # CONEXÃO COM BANCO
 @st.cache_data(ttl=600)
