@@ -595,6 +595,28 @@ with st.container(border=True):
 
         st.plotly_chart(fig_grafo, use_container_width=True)
 
+#===========================================================================================================================================================
+# Agrupando por hora
+df_hora = df_filt.groupby("HORA")["TOTAL"].sum().reset_index()
+
+# Convertendo HORA para string com sufixo "h" (opcional)
+df_hora["HORA_LABEL"] = df_hora["HORA"].astype(str) + "h"
+
+fig_polar = px.line_polar(df_hora,
+                          r="TOTAL",
+                          theta="HORA_LABEL",
+                          line_close=True,
+                          markers=True,
+                          title="🕒 Vendas por Hora do Dia (Polar)",
+                          color_discrete_sequence=["#FE9C37"])
+
+fig_polar.update_traces(fill="toself")
+fig_polar.update_layout(polar=dict(
+    angularaxis=dict(direction="clockwise")
+))
+
+st.plotly_chart(fig_polar, use_container_width=True)
+
 
 #Evolução de venda por dia da semana
 #===========================================================================================================================================================
