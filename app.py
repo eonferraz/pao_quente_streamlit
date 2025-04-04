@@ -603,14 +603,21 @@ with st.container(border=True):
 
     df_filt["MES_ANO"] = df_filt["DATA"].dt.to_period("M").astype(str)
     meses_disp = sorted(df_filt["MES_ANO"].unique())
-    meses_selecionados = st.multiselect("Selecionar Mês(es):", meses_disp, default=[meses_disp[-1]])
+
+    # Selecionar mês atual e anterior por padrão
+    if len(meses_disp) >= 2:
+        default_meses = [meses_disp[-2], meses_disp[-1]]
+    else:
+        default_meses = meses_disp
+
+    meses_selecionados = st.multiselect("Selecionar Mês(es):", meses_disp, default=default_meses)
 
     df_mes = df_filt[df_filt["MES_ANO"].isin(meses_selecionados)].copy()
     df_mes["SEMANA"] = df_mes["DATA"].dt.isocalendar().week
     df_mes["ANO"] = df_mes["DATA"].dt.year
     dias_traduzidos = {
-        "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
-        "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
+        "Sunday": "domingo", "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
+        "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado"
     }
     df_mes["DIA_SEMANA"] = df_mes["DATA"].dt.day_name().map(dias_traduzidos)
 
@@ -620,7 +627,9 @@ with st.container(border=True):
 
     df_grouped = df_mes.groupby(["SEMANA", "PERIODO", "DIA_SEMANA"])["TOTAL"].sum().reset_index()
     df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TOTAL").fillna(0)
-    ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+
+    # Ordem começando por domingo
+    ordem = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
     df_pivot = df_pivot.reindex(ordem)
     df_pivot = df_pivot[sorted(df_pivot.columns, key=lambda x: datetime.strptime(x.split(" à ")[0], "%d/%m"))]
 
@@ -647,7 +656,25 @@ with st.container(border=True):
         df_formatada[col] = col_fmt
         variacoes_pct[col] = var_list
 
-    # === Tabela HTML
+    # === Totais semanais
+    totais_semana = df_pivot.sum(axis=0)
+    totais_variacoes = []
+    totais_formatados = []
+
+    for i, col in enumerate(colunas):
+        valor = totais_semana[col]
+        texto = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        variacao = None
+        if i > 0:
+            valor_ant = totais_semana[colunas[i - 1]]
+            if valor_ant > 0:
+                variacao = (valor - valor_ant) / valor_ant
+                cor = "green" if variacao > 0 else "red"
+                texto += f"<br><span style='color:{cor}; font-size: 12px'>{variacao:+.2%}</span>"
+        totais_formatados.append(texto)
+        totais_variacoes.append(variacao)
+
+    # === Tabela HTML com linha extra de totais
     tabela_html = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
     tabela_html += "<thead><tr><th style='padding: 6px; border: 1px solid #555;'>DIA_SEMANA</th>"
 
@@ -660,18 +687,24 @@ with st.container(border=True):
         for col in colunas:
             celula = df_formatada.loc[idx, col]
             pct = variacoes_pct.loc[idx, col]
-
-            # Cor de fundo com proteção
-            # Cor de fundo com cor fixa (sem degradê)
             if pct is None or pd.isna(pct):
                 fundo = "#f0f0f0"
             elif pct >= 0:
-                fundo = "#CCFFCC"  # verde fixo
+                fundo = "#CCFFCC"
             else:
-                fundo = "#FFCCCC"  # vermelho fixo
-
+                fundo = "#FFCCCC"
             tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; color: #111;'>{celula}</td>"
         tabela_html += "</tr>"
+
+    # Linha de totais
+    tabela_html += f"<tr><td style='padding: 6px; border: 1px solid #555; font-weight: bold; background-color: #ddd;'>TOTAL</td>"
+    for i, col in enumerate(colunas):
+        fundo = "#f0f0f0"
+        if i > 0 and totais_variacoes[i] is not None:
+            fundo = "#CCFFCC" if totais_variacoes[i] >= 0 else "#FFCCCC"
+        tabela_html += f"<td style='padding: 6px; border: 1px solid #555; background-color: {fundo}; font-weight: bold;'>{totais_formatados[i]}</td>"
+    tabela_html += "</tr>"
+
     tabela_html += "</tbody></table>"
 
     st.markdown(tabela_html, unsafe_allow_html=True)
@@ -681,35 +714,43 @@ with st.container(border=True):
     wb = Workbook()
     ws = wb.active
     ws.title = "Comparativo"
-
+    
     # Cabeçalhos
     ws.append(["DIA_SEMANA"] + colunas)
-
-    # Dados com variações simples
+    
+    # Dados da tabela
     for idx in df_pivot.index:
         linha = [idx]
         for col in colunas:
             val = df_pivot.loc[idx, col]
             linha.append(round(val, 2))
         ws.append(linha)
-
+    
+    # Linha de total ao final
+    linha_total = ["TOTAL"]
+    for col in colunas:
+        val = totais_semana[col]
+        linha_total.append(round(val, 2))
+    ws.append(linha_total)
+    
     # Estilização no Excel
-    for row in ws.iter_rows(min_row=2, min_col=2):
+    for row in ws.iter_rows(min_row=2, min_col=2, max_row=ws.max_row):
         for cell in row:
             pct_row = cell.row - 2
             pct_col = cell.column - 2
             try:
-                pct = variacoes_pct.iloc[pct_row, pct_col]
+                if cell.row == ws.max_row:  # Última linha = TOTAL
+                    pct = totais_variacoes[pct_col] if pct_col < len(totais_variacoes) else None
+                else:
+                    pct = variacoes_pct.iloc[pct_row, pct_col]
                 if pct is not None:
-                    if pct >= 0:
-                        fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")
-                    else:
-                        fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+                    fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid") if pct >= 0 else PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
                     cell.fill = fill
             except:
                 continue
             cell.alignment = Alignment(horizontal="center")
-
+    
+    # Download
     wb.save(output)
     st.download_button(
         label="📥 Baixar Excel",
@@ -717,7 +758,6 @@ with st.container(border=True):
         file_name="comparativo_dia_da_semana.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 #===========================================================================================================================================================
 
 
