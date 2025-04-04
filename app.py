@@ -14,6 +14,8 @@ import scipy
 import calendar 
 import plotly.io as pio
 import datetime as dt
+from openpyxl.styles import Alignment
+import plotly.graph_objects as go
 
 # CONFIG INICIAL
 st.set_page_config(
@@ -601,57 +603,48 @@ with st.container(border=True):
 #===========================================================================================================================================================
 
 with st.container(border=True):
-    st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora (com Drill-down Diário)</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora (com Drill-down por Período)</h4>", unsafe_allow_html=True)
 
-    # Filtro de datas (com calendário)
-    datas_disponiveis = sorted(df_filt["DATA"].dt.date.unique())
-    datas_selecionadas = st.multiselect("Selecionar data(s):", datas_disponiveis, default=[datas_disponiveis[-1]])
+    # Filtro de datas com início e fim
+    min_data = df_filt["DATA"].min().date()
+    max_data = df_filt["DATA"].max().date()
 
-    df_hora = df_filt[df_filt["DATA"].dt.date.isin(datas_selecionadas)].copy()
+    col1, col2 = st.columns(2)
+    with col1:
+        data_inicio = st.date_input("📅 Data Início", value=min_data, min_value=min_data, max_value=max_data)
+    with col2:
+        data_fim = st.date_input("📅 Data Fim", value=max_data, min_value=min_data, max_value=max_data)
 
-    # Agrupar por hora
-    df_hora_grouped = df_hora.groupby("HORA").agg({
+    df_periodo = df_filt[(df_filt["DATA"].dt.date >= data_inicio) & (df_filt["DATA"].dt.date <= data_fim)].copy()
+
+    # Agrupamento por hora
+    df_hora = df_periodo.groupby("HORA").agg({
         "TOTAL": "sum",
         "COD_VENDA": "nunique"
     }).reset_index().sort_values("HORA")
 
-    df_hora_grouped["TICKET_MEDIO"] = df_hora_grouped["TOTAL"] / df_hora_grouped["COD_VENDA"]
-    df_hora_grouped["HORA_STR"] = df_hora_grouped["HORA"].astype(str) + "h"
+    df_hora["TICKET_MEDIO"] = df_hora["TOTAL"] / df_hora["COD_VENDA"]
+    df_hora["HORA_STR"] = df_hora["HORA"].astype(str) + "h"
+    media_total = df_hora["TOTAL"].mean()
 
-    media_faturamento = df_hora_grouped["TOTAL"].mean()
-
-    import plotly.graph_objects as go
-    import io
-    from openpyxl import Workbook
-    from openpyxl.styles import Alignment
-
+    # Gráfico
     fig = go.Figure()
 
-    # Barras de faturamento com rótulo do ticket médio
+    # Barras - Faturamento com rótulo de Ticket Médio
     fig.add_trace(go.Bar(
-        x=df_hora_grouped["HORA_STR"],
-        y=df_hora_grouped["TOTAL"],
+        x=df_hora["HORA_STR"],
+        y=df_hora["TOTAL"],
         name="Faturamento",
         marker_color="#FE9C37",
-        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in df_hora_grouped["TICKET_MEDIO"]],
+        text=[f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") for v in df_hora["TICKET_MEDIO"]],
         textposition="outside",
         hovertemplate="<b>Faturamento:</b> R$ %{y:,.2f}<br><b>Ticket Médio:</b> %{text}<extra></extra>"
     ))
 
-    # Linha da média
+    # Linha - Quantidade de Vendas
     fig.add_trace(go.Scatter(
-        x=df_hora_grouped["HORA_STR"],
-        y=[media_faturamento] * len(df_hora_grouped),
-        name="Média Faturamento",
-        mode="lines",
-        line=dict(color="#A4B494", dash="dot"),
-        hoverinfo="skip"
-    ))
-
-    # Linha de quantidade de vendas (eixo secundário)
-    fig.add_trace(go.Scatter(
-        x=df_hora_grouped["HORA_STR"],
-        y=df_hora_grouped["COD_VENDA"],
+        x=df_hora["HORA_STR"],
+        y=df_hora["COD_VENDA"],
         name="Qtd. Vendas",
         mode="lines+markers",
         marker=dict(color="#862E3A"),
@@ -659,49 +652,39 @@ with st.container(border=True):
         hovertemplate="Vendas: %{y}<extra></extra>"
     ))
 
+    # Linha - Média de Faturamento
+    fig.add_trace(go.Scatter(
+        x=df_hora["HORA_STR"],
+        y=[media_total] * len(df_hora),
+        name="Média de Faturamento",
+        mode="lines",
+        line=dict(color="gray", dash="dot"),
+        hoverinfo="skip"
+    ))
+
     fig.update_layout(
         title="Desempenho por Hora",
         xaxis=dict(title="Hora do Dia"),
-        yaxis=dict(
-            title="Faturamento (R$)",
-            titlefont=dict(color="#FE9C37"),
-            tickprefix="R$ ",
-            tickformat=",.0f",
-            showgrid=False
-        ),
-        yaxis2=dict(
-            title="Qtd. Vendas",
-            titlefont=dict(color="#862E3A"),
-            overlaying="y",
-            side="right",
-            showgrid=False
-        ),
+        yaxis=dict(title="Faturamento (R$)", tickprefix="R$ ", tickformat=",.0f"),
+        yaxis2=dict(title="Qtd. Vendas", overlaying="y", side="right"),
         legend=dict(orientation="h", y=1.02, x=0.5, xanchor="center", yanchor="bottom"),
-        margin=dict(t=60, l=50, r=50, b=40),
-        height=500
+        height=450,
+        margin=dict(t=60, l=50, r=50, b=40)
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
-    # ============== Exportar Excel
+    # Exportar para Excel
     output = io.BytesIO()
     wb = Workbook()
     ws = wb.active
     ws.title = "Vendas por Hora"
-
-    ws.append(["Hora", "Faturamento (R$)", "Qtd. Vendas", "Ticket Médio (R$)"])
-    for _, row in df_hora_grouped.iterrows():
-        ws.append([
-            f"{row['HORA']}h",
-            round(row["TOTAL"], 2),
-            row["COD_VENDA"],
-            round(row["TICKET_MEDIO"], 2)
-        ])
-
-    for col in ["A", "B", "C", "D"]:
+    ws.append(["Hora", "Faturamento", "Qtd. Vendas", "Ticket Médio"])
+    for _, row in df_hora.iterrows():
+        ws.append([row["HORA_STR"], float(row["TOTAL"]), int(row["COD_VENDA"]), float(row["TICKET_MEDIO"])])
+    for col in ["B", "C", "D"]:
         for cell in ws[col]:
             cell.alignment = Alignment(horizontal="center")
-
     wb.save(output)
 
     st.download_button(
