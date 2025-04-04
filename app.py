@@ -42,32 +42,32 @@ def carregar_dados():
 def montar_sidebar(df, todas_uns):
     st.sidebar.markdown("## ⚙️ Painel de Controles")
 
-    # 1. Recarregar Dados
+    # Recarregar
     if st.sidebar.button("🔄 Recarregar Dados", help="Atualiza os dados diretamente do banco"):
         st.cache_data.clear()
         st.experimental_rerun()
 
     st.sidebar.markdown("---")
 
-    # 2. Filtro de Período
+    # Filtros
     data_ini = st.sidebar.date_input("📆 Data Início", value=df["DATA"].min())
     data_fim = st.sidebar.date_input("📆 Data Fim", value=df["DATA"].max())
-
-    # 3. Filtro de Unidade
     un_selecionadas = st.sidebar.multiselect("🏬 Unidades:", todas_uns, default=todas_uns)
 
     st.sidebar.markdown("---")
-    
-    # 5. Tema (ainda não aplicado no visual, mas pode ser usado)
+
+    # Tema
     tema = st.sidebar.selectbox("🎨 Tema de Cores", ["Padrão", "Escuro", "Claro"])
 
     st.sidebar.markdown("---")
-    # 7. Botão para limpar filtros
+
     if st.sidebar.button("🧹 Limpar Filtros"):
         st.session_state.clear()
         st.experimental_rerun()
 
-    return data_ini, data_fim, un_selecionadas, analise, tema, ambiente
+    # Retorna apenas as variáveis que você espera capturar
+    return data_ini, data_fim, un_selecionadas, tema
+
 #====================================================================================================================================
 
 
