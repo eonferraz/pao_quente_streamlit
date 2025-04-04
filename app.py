@@ -595,12 +595,12 @@ with st.container(border=True):
 
         st.plotly_chart(fig_grafo, use_container_width=True)
 
+
+# Análise por hora.
 #===========================================================================================================================================================
-# Agrupando por hora
 with st.container(border=True):
     st.markdown("<h4 style='color:#862E3A;'>⏰ Desempenho de Vendas por Hora</h4>", unsafe_allow_html=True)
 
-    # Agrupar os dados
     df_hora = df_filt.groupby("HORA").agg({
         "TOTAL": "sum",
         "COD_VENDA": "nunique"
@@ -613,7 +613,7 @@ with st.container(border=True):
 
     fig = go.Figure()
 
-    # Faturamento - Barras
+    # Faturamento (barras)
     fig.add_trace(go.Bar(
         x=df_hora["HORA_STR"],
         y=df_hora["TOTAL"],
@@ -623,7 +623,7 @@ with st.container(border=True):
         hovertemplate="Faturamento: R$ %{y:,.2f}<extra></extra>"
     ))
 
-    # Qtde Vendas - Linha
+    # Qtde de Vendas (linha)
     fig.add_trace(go.Scatter(
         x=df_hora["HORA_STR"],
         y=df_hora["COD_VENDA"],
@@ -634,7 +634,7 @@ with st.container(border=True):
         hovertemplate="Vendas: %{y}<extra></extra>"
     ))
 
-    # Ticket Médio - Linha pontilhada
+    # Ticket Médio (linha pontilhada no mesmo eixo do faturamento)
     fig.add_trace(go.Scatter(
         x=df_hora["HORA_STR"],
         y=df_hora["TICKET_MEDIO"],
@@ -642,14 +642,13 @@ with st.container(border=True):
         mode="lines+markers",
         marker=dict(color="#A4B494"),
         line=dict(dash="dot"),
-        yaxis="y",
+        yaxis="y1",
         hovertemplate="Ticket Médio: R$ %{y:,.2f}<extra></extra>"
     ))
 
-    # Layout geral
     fig.update_layout(
-        title="Desempenho por Hora",
-        xaxis=dict(title="Hora do Dia"),
+        title="Desempenho por Hora do Dia",
+        xaxis=dict(title="Hora"),
         yaxis=dict(
             title="R$ (Faturamento / Ticket Médio)",
             titlefont=dict(color="#FE9C37"),
@@ -658,23 +657,14 @@ with st.container(border=True):
             showgrid=False
         ),
         yaxis2=dict(
-            title="Quantidade de Vendas",
+            title="Qtd. Vendas",
             titlefont=dict(color="#862E3A"),
             overlaying="y",
             side="right",
             showgrid=False
         ),
-        yaxis3=dict(
-            title="Ticket Médio",
-            titlefont=dict(color="#A4B494"),
-            anchor="free",
-            overlaying="y",
-            side="right",
-            position=1.1,
-            showgrid=False
-        ),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
-        margin=dict(t=60, l=40, r=40, b=40),
+        legend=dict(orientation="h", y=1.02, x=0.5, xanchor="center", yanchor="bottom"),
+        margin=dict(t=60, l=50, r=50, b=40),
         height=450
     )
 
