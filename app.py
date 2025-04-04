@@ -608,12 +608,13 @@ with st.container(border=True):
     # Filtro de datas com início e fim
     min_data = df_filt["DATA"].min().date()
     max_data = df_filt["DATA"].max().date()
-
+    hoje = datetime.today().date()
+    
     col1, col2 = st.columns(2)
     with col1:
-        data_inicio = st.date_input("📅 Data Início", value=min_data, min_value=min_data, max_value=max_data)
+        data_inicio = st.date_input("📅 Data Início", value=hoje, min_value=min_data, max_value=max_data)
     with col2:
-        data_fim = st.date_input("📅 Data Fim", value=max_data, min_value=min_data, max_value=max_data)
+        data_fim = st.date_input("📅 Data Fim", value=hoje, min_value=min_data, max_value=max_data)
 
     df_periodo = df_filt[(df_filt["DATA"].dt.date >= data_inicio) & (df_filt["DATA"].dt.date <= data_fim)].copy()
 
