@@ -57,43 +57,17 @@ def montar_sidebar(df, todas_uns):
     un_selecionadas = st.sidebar.multiselect("🏬 Unidades:", todas_uns, default=todas_uns)
 
     st.sidebar.markdown("---")
-
-    # Tema
-    tema = st.sidebar.selectbox("🎨 Tema de Cores", ["Padrão", "Escuro", "Claro"])
-
-    st.sidebar.markdown("---")
-
+    
     # Limpar filtros
     if st.sidebar.button("🧹 Limpar Filtros"):
         st.session_state.clear()
         st.experimental_rerun()
 
-    return data_ini, data_fim, un_selecionadas, tema
+    return data_ini, data_fim, un_selecionadas
 
 #====================================================================================================================================
-# TEMA
-def aplicar_tema(tema):
-    if tema == "Escuro":
-        st.markdown("""
-            <style>
-                body, .stApp {
-                    background-color: #1e1e1e;
-                    color: #f0f0f0;
-                }
-                .block-container {
-                    background-color: #1e1e1e;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-    elif tema == "Claro":
-        st.markdown("""
-            <style>
-                body, .stApp {
-                    background-color: #ffffff;
-                    color: #111111;
-                }
-            </style>
-        """, unsafe_allow_html=True)
+
+
 
 #====================================================================================================================================
 # CARGA E PREPARO
