@@ -551,7 +551,7 @@ with st.container(border=True):
                 texto = f"<b>{node}</b>"
             else:
                 pct = G[produto_selecionado][node]['weight']
-                legenda = f"aparece em {pct:.1%} das vendas de {produto_selecionado}"
+                legenda = f"em {pct:.1%} das vendas de {produto_selecionado}"
                 tamanho = 20 + pct * 100
                 texto = f"<b>{node}</b><br><span style='font-size:18px; color:#333;'>{legenda}</span>"
             
