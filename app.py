@@ -746,7 +746,7 @@ with st.container(border=True):
     df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TOTAL").fillna(0)
 
     # Ordem começando por domingo
-    ordem = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
+   ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
     df_pivot = df_pivot.reindex(ordem)
     df_pivot = df_pivot[sorted(df_pivot.columns, key=lambda x: datetime.strptime(x.split(" à ")[0], "%d/%m"))]
 
@@ -917,7 +917,7 @@ with st.container(border=True):
     df_grouped.rename(columns={"COD_VENDA": "QTDE"}, inplace=True)
     df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="QTDE").fillna(0)
 
-    ordem = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
+    ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
     df_pivot = df_pivot.reindex(ordem)
     df_pivot = df_pivot[sorted(df_pivot.columns, key=lambda x: datetime.strptime(x.split(" à ")[0], "%d/%m"))]
 
@@ -1079,7 +1079,7 @@ with st.container(border=True):
     df_grouped["TICKET"] = df_grouped["TOTAL"] / df_grouped["COD_VENDA"]
     df_pivot = df_grouped.pivot(index="DIA_SEMANA", columns="PERIODO", values="TICKET").fillna(0)
 
-    ordem = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
+    ordem = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
     df_pivot = df_pivot.reindex(ordem)
     df_pivot = df_pivot[sorted(df_pivot.columns, key=lambda x: datetime.strptime(x.split(" à ")[0], "%d/%m"))]
 
